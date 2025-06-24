@@ -1,0 +1,8 @@
+fastap
+uvicorn[standard]
+openai
+python-dotenv
+pydantic
+httpx
+mongoengine
+pymongo
