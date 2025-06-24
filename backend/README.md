@@ -1,4 +1,5 @@
 
+# Configuration 
 ```python 
 pip3 install virtualenv - Installation de l'environnement 
 python3 -m venv venv
@@ -7,8 +8,7 @@ source venv/bin/activate -- Activer l'environnement
 
 ```
 
-
-**Installer les dépendances avec pip**
+# Installer les dépendances avec pip
 
 ```BASH 
 pip install -r requirements.txt
