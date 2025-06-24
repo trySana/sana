@@ -2,7 +2,9 @@ fastapi
 uvicorn[standard]
 openai
 python-dotenv
-pydantic
+pydantic>=2.0
+pydantic-settings>=2.0
 httpx
 mongoengine
 pymongo
+motor
