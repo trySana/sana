@@ -13,7 +13,7 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 2. Install Dependencies 
+### 2. Install Dependencies
 ```
 pip install -r requirements.txt
 ```
@@ -30,7 +30,7 @@ MONGO_HOST=your_mongo_host  # Example: cluster0.mongodb.net
 
 These variables are used by the Pydantic Settings class in config.py.
 
- 
+
 ### 4. Run the Backend Server
 
 ```
