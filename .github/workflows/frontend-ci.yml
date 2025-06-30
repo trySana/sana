@@ -1,0 +1,61 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+jobs:
+  frontend-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'pnpm'
+        cache-dependency-path: frontend/pnpm-lock.yaml
+
+    - name: Install pnpm
+      run: npm install -g pnpm
+
+    - name: Install dependencies
+      run: |
+        cd frontend
+        pnpm install --frozen-lockfile
+
+    - name: Type check
+      run: |
+        cd frontend
+        pnpm tsc --noEmit
+
+    - name: Lint
+      run: |
+        cd frontend
+        pnpm eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0
+
+    - name: Format check
+      run: |
+        cd frontend
+        pnpm prettier --check .
+
+    - name: Build
+      run: |
+        cd frontend
+        pnpm build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-build
+        path: frontend/dist/

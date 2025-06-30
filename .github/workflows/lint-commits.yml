@@ -1,0 +1,45 @@
+name: Lint Commits
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install commitlint
+      run: |
+        npm install -g @commitlint/cli @commitlint/config-conventional
+
+    - name: Create commitlint config
+      run: |
+        echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+
+    - name: Lint commit messages
+      run: |
+        npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+    - name: Check commit message format
+      run: |
+        echo "Checking commit messages format..."
+        git log --format="%s" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | while read line; do
+          if [[ ! "$line" =~ ^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+ ]]; then
+            echo "❌ Invalid commit message format: $line"
+            echo "Expected format: type(scope): description"
+            echo "Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
+            exit 1
+          else
+            echo "✅ Valid commit message: $line"
+          fi
+        done

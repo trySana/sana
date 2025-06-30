@@ -1,10 +1,11 @@
-##  Stack technique
+## Stack technique
 
 - [React Native](https://reactnative.dev/)
 - [Expo](https://expo.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
 
 ---
+
 ## Lancer le projet
 
 ### 1. Pré-requis
@@ -23,3 +24,4 @@ cd sana/frontend
 pnpm install
 
 pnpm start
+```
