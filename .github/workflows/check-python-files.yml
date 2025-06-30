@@ -1,0 +1,39 @@
+name: Check Python Files
+
+on:
+  push:
+    branches: [ main, develop]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  security-analysis:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirement-dev.txt
+
+    - name: Check for dead code with Vulture
+      run: |
+        vulture . --min-confidence 80 --exclude=venv,tests
+
+    - name: Check Python syntax
+      run: |
+        python -m py_compile $(find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*")

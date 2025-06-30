@@ -1,0 +1,17 @@
+-r requirements.txt
+
+black
+flake8
+mypy
+reorder-python-imports
+
+pytest
+pytest-asyncio
+pytest-cov
+coverage
+
+vulture
+
+pre-commit
+
+packaging
