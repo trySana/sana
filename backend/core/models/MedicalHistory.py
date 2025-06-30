@@ -1,6 +1,7 @@
-from mongoengine import LazyReferenceField, DictField
-
+# mypy: ignore-errors
 from core.models.base import BaseDocument
+from mongoengine import DictField
+from mongoengine import LazyReferenceField
 
 
 class MedicalHistory(BaseDocument):
@@ -12,7 +13,7 @@ class MedicalHistory(BaseDocument):
     patient = LazyReferenceField("User", passthrough=True, required=True)
     symptoms = DictField(required=True)
 
-    meta = {
+    meta = {  # type: ignore
         "collection": "MedicalHistory",
         "indexes": ["created_at"],
     }

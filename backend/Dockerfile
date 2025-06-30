@@ -1,4 +1,4 @@
-# Dockerfile for the backend 
+# Dockerfile for the backend
 FROM python:3.10-slim
 
 WORKDIR /app

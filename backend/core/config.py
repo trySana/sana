@@ -1,5 +1,7 @@
 import logging
-from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 
 
 # === 1. Configuration du logger global ===
@@ -19,11 +21,12 @@ if not logger.hasHandlers():
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: str = ""
     MONGO_URI: str = "mongodb://localhost:27017"
     MONGO_DB: str = "mydb"
-    mongo_user: str
-    mongo_pwd: str
-    mongo_host: str
+    mongo_user: str = ""
+    mongo_pwd: str = ""
+    mongo_host: str = "localhost"
 
-settings = Settings()
+
+settings = Settings()  # type: ignore

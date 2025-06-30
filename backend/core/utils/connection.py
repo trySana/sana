@@ -1,11 +1,11 @@
 import os
+
 from mongoengine import connect
 
 
 def database_connection():
-    """Connect to database.
-    """
-    
+    """Connect to database."""
+
     connect(
         db=os.getenv("MONGO_DB"),
         host=(
