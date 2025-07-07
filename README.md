@@ -70,7 +70,9 @@ cd backend
 # Créer un environnement virtuel
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
+
 # ou
+
 venv\Scripts\activate     # Windows
 
 # Installer les dépendances
