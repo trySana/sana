@@ -1,11 +1,14 @@
 from core.config import logger
 from core.config import settings
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter, UploadFile, File
 from motor.motor_asyncio import AsyncIOMotorClient
+from core.utils.kyutai_stt import transcribe_audio
 
 app = FastAPI()
 mongodb_client = None
 db = None
+
+router = APIRouter()
 
 
 @app.on_event("startup")
@@ -30,3 +33,10 @@ async def shutdown_db_client():
 async def read_root():
     logger.info("Route / called")
     return {"message": "Hello World"}
+
+
+@router.post("/stt/")
+async def stt_endpoint(file: UploadFile = File(...)):
+
+    text = transcribe_audio(file.file)
+    return {"transcription": text}

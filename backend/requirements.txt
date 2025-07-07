@@ -8,3 +8,6 @@ httpx
 mongoengine
 pymongo
 motor
+sentencepiece
+torch
+python-multipart
