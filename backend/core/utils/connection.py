@@ -1,18 +1,20 @@
-import os
-
 from mongoengine import connect
+
+from backend.core.config import logger
+from backend.core.config import settings
 
 
 def database_connection():
     """Connect to database."""
-
+    logger.info("Connecting to database...")
     connect(
-        db=os.getenv("MONGO_DB"),
+        db=settings.MONGO_DB,
         host=(
-            "mongodb+srv"
-            f"://{os.getenv('MONGO_USER')}"
-            f":{os.getenv('MONGO_PWD')}"
-            f"@{os.getenv('MONGO_HOST')}"
-            f"/{os.getenv('MONGO_DB')}"
+            "mongodb+srv://"
+            + settings.MONGO_USER
+            + settings.MONGO_PWD
+            + "@"
+            + settings.MONGO_HOST
         ),
     )
+    logger.info("Connected to database.")
