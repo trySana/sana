@@ -1,28 +1,29 @@
-from core.config import logger
-from core.config import settings
 from fastapi import FastAPI
-from motor.motor_asyncio import AsyncIOMotorClient
+from mongoengine.connection import disconnect_all
 
+from backend.core.config import logger
+from backend.core.utils.connection import database_connection
+from backend.core.utils.text_to_speech import Jenny
+
+
+jenny = Jenny()
+
+logger.info("Starting the API...")
 app = FastAPI()
-mongodb_client = None
-db = None
+logger.info("API started.")
 
 
 @app.on_event("startup")
 async def startup_db_client():
-    global mongodb_client, db
     logger.info("Connecting to MongoDB...")
-    mongodb_client = AsyncIOMotorClient(settings.MONGO_URI)
-    db = mongodb_client[settings.MONGO_DB]
+    database_connection()
     logger.info("Connected to MongoDB.")
 
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    global mongodb_client  # noqa: F824
     logger.info("Disconnecting from MongoDB...")
-    if mongodb_client:
-        mongodb_client.close()
+    disconnect_all()
     logger.info("Disconnected from MongoDB.")
 
 
