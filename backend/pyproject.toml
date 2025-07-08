@@ -68,6 +68,9 @@ addopts = [
     "--cov-report=html",
     "--cov-report=xml",
 ]
+markers = [
+    "asyncio: mark test as asyncio to run with pytest-asyncio"
+]
 
 [tool.coverage.run]
 source = ["."]

@@ -1,39 +1,37 @@
 import asyncio
 import logging
 
-import whisper  # noqa: F401
-
+import whisper
 
 # Configuration du logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-logger.info("Loading model...")
-model = whisper.load_model("turbo")
-logger.info("Model loaded.")
 
+class WhisperSTT:
+    def __init__(self, model_name: str = "turbo"):
+        logger.info("Loading Whisper model...")
+        self.model = whisper.load_model(model_name)
+        logger.info("Whisper model loaded.")
 
-# Transcribe the audio
-async def transcribe_audio(audio_path: str) -> str:
-    logger.info(f"Audio file received for transcription : {audio_path}")
-    logger.info("Starting transcription...")
+    async def transcribe_audio(self, audio_path: str) -> str:
+        logger.info(f"Audio file received for transcription : {audio_path}")
+        logger.info("Starting transcription...")
 
-    def _transcribe():
-        return model.transcribe(audio_path)
+        def _transcribe():
+            return self.model.transcribe(audio_path)
 
-    result = await asyncio.to_thread(_transcribe)
-    logger.info("Transcription completed.")
-    logger.info(f"Transcription : {result['text']}")
-    return result["text"]
+        result = await asyncio.to_thread(_transcribe)
+        logger.info("Transcription completed.")
+        logger.info(f"Transcription : {result['text']}")
+        return result["text"]
 
+    async def detect_language(self, audio_path: str) -> str:
+        logger.info(f"Language detection for : {audio_path}")
 
-# Detect the spoken language
-async def detect_language(audio_path: str) -> str:
-    logger.info(f"Language detection for : {audio_path}")
+        def _detect():
+            return self.model.transcribe(audio_path)
 
-    def _detect():
-        return model.transcribe(audio_path)
-
-    result = await asyncio.to_thread(_detect)
-    logger.info(f"Language detected : {result['language']}")
-    return result["language"]
+        result = await asyncio.to_thread(_detect)
+        logger.info(f"Language detected : {result['language']}")
+        return result["language"]

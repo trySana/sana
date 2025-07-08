@@ -8,6 +8,7 @@ from mongoengine.connection import disconnect_all
 
 from core.config import logger
 from core.utils.whisper_stt import transcribe_audio
+from core.utils.whisper_stt import WhisperSTT
 from fastapi import FastAPI
 from fastapi import File
 from fastapi import UploadFile
@@ -23,6 +24,9 @@ from backend.core.models.user import User
 
 from backend.core.utils.connection import database_connection
 
+
+
+whisper_stt = WhisperSTT()
 
 logger.info("Starting the API...")
 app = FastAPI()
