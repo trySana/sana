@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from backend.core.utils.whisper_stt import WhisperSTT
+from backend.core.utils.whisper_stt import WhisperSTT  # noqa: F401
 
 
 @pytest.mark.asyncio
