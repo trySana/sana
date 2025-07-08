@@ -11,3 +11,6 @@ motor
 mongoengine
 requests
 types-requests
+whisper
+openai-whisper
+
