@@ -6,7 +6,7 @@ NC=\033[0m
 
 help:
 	@echo ""
-	@echo "$(GREEN)Commandes disponibles :$(NC)"
+	@echo "$(GREEN)Available commands :$(NC)"
 	@echo "  make test         - Launch tests with coverage and colors"
 	@echo "  make test-verbose - Launch tests in verbose mode"
 	@echo "  make coverage     - Generate the HTML coverage report"

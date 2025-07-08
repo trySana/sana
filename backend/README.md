@@ -36,3 +36,21 @@ These variables are used by the Pydantic Settings class in config.py.
 ```
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+### Makefile
+
+```
+make help
+```
+
+```
+Available commands :
+  make test         - Launch tests with coverage and colors
+  make test-verbose - Launch tests in verbose mode
+  make coverage     - Generate the HTML coverage report
+  make lint         - Linter the code (flake8)
+  make format       - Format the code (black)
+  make typecheck    - Check the types (mypy)
+  make clean        - Clean the temporary files
+
+```
