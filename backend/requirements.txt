@@ -9,3 +9,4 @@ mongoengine
 pymongo
 motor
 coqui-tts
+mongoengine
