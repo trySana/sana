@@ -1,4 +1,5 @@
 
+
 import hashlib
 
 
@@ -6,19 +7,20 @@ from fastapi import FastAPI
 from mongoengine.connection import disconnect_all
 
 from core.config import logger
-from core.config import settings
 from core.utils.whisper_stt import transcribe_audio
 from fastapi import FastAPI
 from fastapi import File
 from fastapi import UploadFile
-from motor.motor_asyncio import AsyncIOMotorClient
 
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from backend.core.config import logger
 from backend.core.config import settings
 from backend.core.models.user import Authentification
 from backend.core.models.user import CreateUser
 from backend.core.models.user import User
+
+
 from backend.core.utils.connection import database_connection
 
 
