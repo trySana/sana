@@ -22,11 +22,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     OPENAI_API_KEY: str = ""
-    MONGO_HOST: str = "localhost:27017"
+    MONGO_URI: str = "mongodb://localhost:27017"
     MONGO_DB: str = "mydb"
-    MONGO_USER: str = ""
-    MONGO_PWD: str = ""
-    COQUI_MODEL: str = "tts_models/en/jenny/jenny"
+    mongo_user: str = ""
+    mongo_pwd: str = ""
+    mongo_host: str = "localhost"
 
 
 settings = Settings()  # type: ignore
