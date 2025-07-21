@@ -12,6 +12,7 @@ def database_connection():
         host=(
             "mongodb+srv://"
             + settings.MONGO_USER
+            + ":"
             + settings.MONGO_PWD
             + "@"
             + settings.MONGO_HOST

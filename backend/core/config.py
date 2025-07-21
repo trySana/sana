@@ -26,7 +26,11 @@ class Settings(BaseSettings):
     MONGO_DB: str = "mydb"
     MONGO_USER: str = ""
     MONGO_PWD: str = ""
-    COQUI_MODEL: str = "tts_models/en/jenny/jenny"
+    ELEVENLABS_API_KEY: str = ""
+    VOICE_ID: str = ""
+    MODEL_ID: str = ""
+    TTS_URL: str = ""
+    SALT: str = ""
 
 
 settings = Settings()  # type: ignore
