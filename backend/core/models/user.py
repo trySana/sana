@@ -1,18 +1,12 @@
 # mypy: ignore-errors
-<<<<<<< HEAD
 from datetime import date
 from typing import Optional
 
-=======
->>>>>>> c7c0aae (refactor: update main)
 from mongoengine import DateField
 from mongoengine import EmailField
 from mongoengine import EnumField
 from mongoengine import StringField
 from pydantic import BaseModel
-
-from backend.core.models.base import BaseDocument
-from backend.core.utils.user import Sex
 
 from backend.core.models.base import BaseDocument
 from backend.core.utils.user import Sex
