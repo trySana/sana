@@ -1,13 +1,13 @@
 # mypy: ignore-errors
-from core.models.base import BaseDocument
-from mongoengine import DictField
-from mongoengine import LazyReferenceField
+from backend.core.models.base import BaseDocument
+from mongoengine import DictField, LazyReferenceField
 
 
 class MedicalHistory(BaseDocument):
     """Document of a previous ill-sate of an user. The
     symptoms field is a dictionary with symptoms as keys
-    and severities as values.
+    and a dictionary (with severities and symptoms duration
+    as keys) as value.
     """
 
     patient = LazyReferenceField("User", passthrough=True, required=True)

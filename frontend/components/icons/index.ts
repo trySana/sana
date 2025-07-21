@@ -1,0 +1,1 @@
+export { SanaLogo } from "./SanaLogo";
