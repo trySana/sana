@@ -8,5 +8,6 @@ httpx
 mongoengine
 pymongo
 motor
-coqui-tts
 mongoengine
+requests
+types-requests
