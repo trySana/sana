@@ -1,5 +1,6 @@
 
 
+
 import hashlib
 
 
@@ -9,6 +10,8 @@ from mongoengine.connection import disconnect_all
 from core.config import logger
 from core.utils.whisper_stt import transcribe_audio
 from core.utils.whisper_stt import WhisperSTT
+
+
 from fastapi import FastAPI
 from fastapi import File
 from fastapi import UploadFile
@@ -22,7 +25,12 @@ from backend.core.models.user import CreateUser
 from backend.core.models.user import User
 
 
+from backend.core.config import logger
 from backend.core.utils.connection import database_connection
+
+
+from backend.core.utils.whisper_stt import WhisperSTT
+
 
 
 
@@ -37,6 +45,7 @@ logger.info("API started.")
 async def read_root():
     logger.info("Route / called")
     return {"message": "Hello World"}
+
 
 
 @app.post("/create_user/")
@@ -114,3 +123,12 @@ async def authentificate(input: Authentification) -> bool:
     disconnect_all()
 
     return True
+
+@app.post("/stt/")
+async def stt(file: UploadFile = File(...)):
+    temp_path = f"/tmp/{file.filename}"
+    with open(temp_path, "wb") as buffer:
+        buffer.write(await file.read())
+    text = await whisper_stt.transcribe_audio(temp_path)
+    return {"text": text}
+
