@@ -114,18 +114,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
         hidden={Platform.OS === "ios"}
       />
 
-      {/* Skip button */}
-      {currentPage < onboardingData.length - 1 && (
-        <View style={styles.skipContainer}>
-          <Button
-            title="Passer"
-            onPress={handleSkip}
-            variant="outline"
-            size="small"
-            style={styles.skipButton}
-          />
-        </View>
-      )}
+      {/* Skip button supprimé pour design épuré */}
 
       {/* Pages content */}
       <ScrollView
@@ -153,34 +142,23 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
         ))}
       </ScrollView>
 
-      {/* Bottom navigation */}
-      <View style={styles.bottomContainer}>
-        {/* Page indicator */}
+      {/* Bottom Navigation Épurée */}
+      <View style={styles.cleanBottomContainer}>
+        {/* Page Indicator */}
         <PageIndicator
           totalPages={onboardingData.length}
           currentPage={currentPage}
         />
 
-        {/* Navigation buttons */}
-        <View style={styles.buttonContainer}>
-          {currentPage > 0 && (
-            <Button
-              title="Précédent"
-              onPress={handlePrevious}
-              variant="secondary"
-              style={styles.previousButton}
-            />
-          )}
-
+        {/* Navigation Buttons Épurés */}
+        <View style={styles.cleanButtonContainer}>
           <Button
             title={
-              currentPage === onboardingData.length - 1
-                ? "Commencer"
-                : "Suivant"
+              currentPage === onboardingData.length - 1 ? "Get Started" : "Next"
             }
             onPress={handleNext}
             variant="primary"
-            style={styles.nextButton}
+            style={styles.cleanNextButton}
           />
         </View>
       </View>
@@ -195,17 +173,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  skipContainer: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? dimensions.safeAreaTop + 10 : 20,
-    right: spacing.lg,
-    zIndex: 10,
-  },
-  skipButton: {
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.white,
-    ...shadows.sm,
-  },
+  // Skip button supprimé pour épurement
   scrollView: {
     flex: 1,
   },
@@ -213,28 +181,21 @@ const styles = StyleSheet.create({
     alignItems: "flex-start", // Correction pour l'alignement
     flexDirection: "row",
   },
-  bottomContainer: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom:
-      Platform.OS === "ios" ? dimensions.safeAreaBottom + 10 : spacing.xl,
-    backgroundColor: colors.white,
-    borderTopWidth: 0.5,
-    borderTopColor: colors.separator,
-    ...shadows.md,
+  cleanBottomContainer: {
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    paddingBottom: Platform.OS === "ios" ? dimensions.safeAreaBottom + 32 : 32,
+    backgroundColor: "transparent", // Transparent pour épurement
+    borderTopWidth: 0, // Supprimé
+    ...shadows.none, // Aucune ombre
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  cleanButtonContainer: {
     alignItems: "center",
-    paddingTop: spacing.md,
+    paddingTop: 24,
   },
-  previousButton: {
-    flex: 1,
-    marginRight: spacing.md,
-    backgroundColor: colors.white,
-  },
-  nextButton: {
-    flex: 2,
+  cleanNextButton: {
+    width: "100%",
+    maxWidth: 280, // Largeur limitée pour design épuré
   },
   homeIndicator: {
     position: "absolute",

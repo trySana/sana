@@ -27,14 +27,28 @@ export const colors = {
   white: "#FFFFFF",
   cardBackground: "rgba(255, 255, 255, 0.95)", // Cards avec légère transparence
 
-  // Couleurs système
-  success: "#4CAF50", // Vert
-  error: "#FF5252", // Rouge
-  warning: "#FF9800", // Orange
+  // Couleurs système modernes
+  success: "#4CAF50", // Vert moderne
+  error: "#FF5252", // Rouge moderne
+  warning: "#FF9800", // Orange moderne
+  info: "#2196F3", // Bleu info
+
+  // Couleurs glassmorphes modernes
+  glassLight: "rgba(255, 255, 255, 0.25)", // Verre clair
+  glassMedium: "rgba(255, 255, 255, 0.15)", // Verre moyen
+  glassDark: "rgba(255, 255, 255, 0.1)", // Verre foncé
+  glassBorder: "rgba(255, 255, 255, 0.3)", // Bordure verre
+
+  // Couleurs d'accent modernes
+  accent1: "#FFD700", // Or pour les étoiles
+  accent2: "#FF6B6B", // Rouge coral
+  accent3: "#4ECDC4", // Turquoise
+  accent4: "#45B7D1", // Bleu ciel
 
   // Couleurs spéciales
   separator: "#E5E5E5", // Séparateur subtil
   shadow: "rgba(0, 0, 0, 0.1)", // Ombre douce
+  shadowDark: "rgba(0, 0, 0, 0.15)", // Ombre plus prononcée
 
   // Couleurs des réseaux sociaux
   google: "#4285F4",
@@ -158,6 +172,29 @@ export const shadows = {
     shadowOpacity: 0.15,
     shadowRadius: 24,
     elevation: 12,
+  },
+
+  // Nouvelles ombres glassmorphes modernes
+  glass: {
+    shadowColor: colors.shadowDark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  glassHeavy: {
+    shadowColor: colors.shadowDark,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.25,
+    shadowRadius: 32,
+    elevation: 16,
+  },
+  floating: {
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
   },
 };
 
