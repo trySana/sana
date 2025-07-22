@@ -1,0 +1,38 @@
+{
+    "nom": "Durand",
+    "age": 45,
+    "sexe": "Homme",
+    "motif": "Fatigue persistante depuis plusieurs semaines",
+    "symptomes": [
+        "Fatigue intense",
+        "Trouble du sommeil",
+        "Perte d'appétit"
+    ],
+    "diagnostics": [
+        {
+            "nom": "Dépression",
+            "probabilite": 65
+        },
+        {
+            "nom": "Anémie",
+            "probabilite": 20
+        },
+        {
+            "nom": "Hypothyroïdie",
+            "probabilite": 15
+        }
+    ],
+    "recommandations": {
+        "specialistes": [
+            "Psychiatre",
+            "Médecin généraliste"
+        ],
+        "examens": [
+            "Bilan sanguin",
+            "IRM cérébrale"
+        ]
+    },
+    "urgence": "Modérée",
+    "transcription": "Bonjour docteur, je suis très fatigué ces derniers temps, je dors mal et je mange peu.",
+    "score_confiance": 87
+}

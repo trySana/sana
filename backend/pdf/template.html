@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport Médical IA</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+        h1, h2 {
+            color: #00517D;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .highlight {
+            background-color: #f0f8ff;
+            padding: 8px;
+            border-left: 4px solid #00517D;
+        }
+        .symptoms, .diagnoses, .recommendations, .transcription {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .urgency {
+            color: red;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Rapport Médical Assisté par IA</h1>
+
+    <div class="section">
+        <h2>Informations Patient</h2>
+        <p><strong>Nom :</strong> {{ nom }}</p>
+        <p><strong>Âge :</strong> {{ age }} ans</p>
+        <p><strong>Sexe :</strong> {{ sexe }}</p>
+    </div>
+
+    <div class="section">
+        <h2>Motif de consultation</h2>
+        <div class="highlight">{{ motif }}</div>
+    </div>
+
+    <div class="section">
+        <h2>Symptômes déclarés</h2>
+        <div class="symptoms">
+            <ul>
+                {% for symptome in symptomes %}
+                    <li>{{ symptome }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Hypothèses diagnostiques</h2>
+        <div class="diagnoses">
+            <ol>
+                {% for diagnostic in diagnostics %}
+                    <li>{{ diagnostic.nom }} ({{ diagnostic.probabilite }}%)</li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Recommandations IA</h2>
+        <div class="recommendations">
+            <strong>Spécialistes à consulter :</strong>
+            <ul>
+                {% for spec in recommandations.specialistes %}
+                    <li>{{ spec }}</li>
+                {% endfor %}
+            </ul>
+
+            <strong>Examens recommandés :</strong>
+            <ul>
+                {% for exam in recommandations.examens %}
+                    <li>{{ exam }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Urgence estimée</h2>
+        <p class="urgency">{{ urgence }}</p>
+    </div>
+
+    <div class="section">
+        <h2>Transcription de l'entretien</h2>
+        <div class="transcription">
+            {{ transcription }}
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Score de confiance IA</h2>
+        <p><strong>{{ score_confiance }}%</strong></p>
+    </div>
+
+    <div class="footer">
+        <p><em>Ce rapport est généré automatiquement à l'aide d'un assistant IA et ne constitue pas un diagnostic médical définitif.</em></p>
+    </div>
+
+</body>
+</html>

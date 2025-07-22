@@ -2,7 +2,6 @@ from core.utils.symptoms import SymptomsParser
 
 
 def test_symptoms_parser_should_return_empty():
-
     #  Given
     message = "I am your father !"
 
@@ -15,7 +14,6 @@ def test_symptoms_parser_should_return_empty():
 
 
 def test_symptoms_parser_should_return_eye_pain_depression():
-
     #  Given
     message = "I am your father. No I am ! I also have depression and eye pain"
 

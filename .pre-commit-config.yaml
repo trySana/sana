@@ -41,7 +41,19 @@ repos:
     hooks:
       - id: mypy
         files: ^backend/
-        additional_dependencies: [types-requests, mongoengine-stubs]
+        args: ["--explicit-package-bases", "--ignore-missing-imports"]
+        additional_dependencies:
+          - types-requests
+          - mongoengine-stubs
+          - types-pyyaml
+          - types-torch
+          - fastapi
+          - motor
+          - pydantic-settings
+          - torch
+          - tts
+          - packaging
+
 
   # Hooks JavaScript/TypeScript (Frontend) - Désactivé temporairement
   # - repo: https://github.com/pre-commit/mirrors-eslint

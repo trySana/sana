@@ -9,3 +9,5 @@ mongoengine
 pymongo
 motor
 coqui-tts
+jinja2
+weasyprint

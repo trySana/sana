@@ -1,4 +1,4 @@
-## Stack technique
+pnpm## Stack technique
 
 - [React Native](https://reactnative.dev/)
 - [Expo](https://expo.dev/)

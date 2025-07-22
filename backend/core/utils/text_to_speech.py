@@ -3,9 +3,7 @@ from TTS.api import TTS
 
 
 class Jenny:
-
     def __init__(self, model_path: str):
-
         self.tts = TTS(model_path).to(Jenny.get_device())
 
     @staticmethod

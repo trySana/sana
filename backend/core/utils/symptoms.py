@@ -152,7 +152,6 @@ all_symptom_enums = [
 
 
 class SymptomsParser:
-
     @staticmethod
     def get_symptoms(enum: Symptoms) -> list[str]:
         """Get all symptoms in a category Enum.
@@ -204,12 +203,10 @@ class SymptomsParser:
         found_categories = list()
 
         for enum in all_symptom_enums:
-
             symptoms = SymptomsParser.get_symptoms(enum=enum)
 
             matched_symptoms = SymptomsParser.symptoms_in_message(
-                message=message,
-                symptoms=symptoms
+                message=message, symptoms=symptoms
             )
 
             if matched_symptoms:

@@ -1,9 +1,10 @@
 # mypy: ignore-errors
-from backend.core.models.base import BaseDocument
-from backend.core.utils.user import Sex
 from mongoengine import DateField
 from mongoengine import EnumField
 from mongoengine import StringField
+
+from backend.core.models.base import BaseDocument
+from backend.core.utils.user import Sex
 
 
 class User(BaseDocument):
