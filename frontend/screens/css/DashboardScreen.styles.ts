@@ -1,4 +1,6 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   container: {
@@ -30,11 +32,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backButtonText: {
-    fontSize: 24,
-    color: '#4a90e2',
-    fontWeight: 'bold',
-  },
   headerTitle: {
     flex: 1,
     alignItems: 'center',
@@ -50,36 +47,60 @@ export const styles = StyleSheet.create({
     color: '#7f8c8d',
     letterSpacing: 0.5,
   },
-  headerAction: {
+  settingsButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  chatButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#4a90e2',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chatButtonText: {
-    fontSize: 18,
   },
 
-  
-  statsContainer: {
-    flexDirection: 'row',
+  // CONTENU SCROLLABLE
+  scrollContent: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingVertical: 20,
-    gap: 15,
   },
-  statCard: {
+
+  // ACTIONS RAPIDES
+  quickActionsContainer: {
+    marginTop: 20,
+    marginBottom: 15,
+  },
+  primaryActionButton: {
+    backgroundColor: '#4a90e2',
+    borderRadius: 15,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  actionButtonContent: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  actionButtonTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 2,
+  },
+  actionButtonSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  secondaryActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  secondaryActionButton: {
     flex: 1,
     backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 15,
+    borderRadius: 12,
+    padding: 15,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -87,35 +108,227 @@ export const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4a90e2',
-    marginBottom: 5,
-  },
-  statLabel: {
+  secondaryActionText: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: '#2c3e50',
+    fontWeight: '600',
+    marginTop: 6,
     textAlign: 'center',
   },
 
-  
-  recordsList: {
-    flex: 1,
+  // WIDGET PROCHAIN RDV
+  appointmentWidget: {
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    padding: 20,
+    marginTop: 20,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4a90e2',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  widgetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  widgetTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginLeft: 8,
+  },
+  appointmentInfo: {
+    marginBottom: 15,
+  },
+  appointmentDate: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4a90e2',
+    marginBottom: 4,
+  },
+  appointmentDetails: {
+    fontSize: 16,
+    color: '#2c3e50',
+    marginBottom: 2,
+  },
+  appointmentTime: {
+    fontSize: 14,
+    color: '#7f8c8d',
+  },
+  appointmentButton: {
+    backgroundColor: '#4a90e2',
+    paddingVertical: 10,
     paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  appointmentButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // SECTIONS
+  sectionContainer: {
+    marginBottom: 25,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#2c3e50',
     marginBottom: 15,
-    marginTop: 10,
   },
+
+  // SANTÉ QUOTIDIENNE
+  dailyMetricsCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 25,
+  },
+  metricItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  metricEmoji: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4a90e2',
+    marginBottom: 4,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    textAlign: 'center',
+  },
+
+  // GRAPHIQUE MINI
+  chartSection: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 20,
+  },
+  chartTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  miniChart: {
+    alignItems: 'center',
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 15,
+    gap: 15,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 5,
+  },
+  legendText: {
+    fontSize: 11,
+    color: '#7f8c8d',
+  },
+  chartContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: 90,
+    width: 250,
+  },
+  chartDay: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  chartBars: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 5,
+  },
+  chartBar: {
+    width: 3,
+    borderRadius: 1.5,
+    minHeight: 5,
+  },
+  chartDayLabel: {
+    fontSize: 10,
+    color: '#7f8c8d',
+  },
+
+  // MODE DE VIE
+  lifestyleGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  lifestyleCard: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 15,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  lifestyleNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  lifestyleLabel: {
+    fontSize: 11,
+    color: '#7f8c8d',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  progressBar: {
+    width: '100%',
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+
+  // CARTES HISTORIQUE
   recordCard: {
     backgroundColor: '#ffffff',
     borderRadius: 15,
     padding: 15,
-    marginBottom: 15,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -179,5 +392,34 @@ export const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // BOUTON CHAT FLOTTANT
+  floatingChatButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#4a90e2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+
+  // STYLES CACHÉS (pour éviter les erreurs)
+  sectionHeader: {
+    display: 'none',
+  },
+  chatQuickButton: {
+    display: 'none',
+  },
+  chatQuickText: {
+    display: 'none',
   },
 });

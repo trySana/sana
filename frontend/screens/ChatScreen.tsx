@@ -36,6 +36,14 @@ export default function ChatScreen({ navigation }: Props) {
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  
+  const quickSuggestions = [
+    "Comment puis-je améliorer mon sommeil ?",
+    "Quels sont les symptômes à surveiller ?",
+    "Conseils pour réduire le stress",
+    "Alimentation équilibrée"
+  ];
   const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const typingAnim1 = useRef(new Animated.Value(0.3)).current;
@@ -91,6 +99,10 @@ export default function ChatScreen({ navigation }: Props) {
     animateTyping();
   }, []);
 
+  const handleSuggestionPress = (suggestion: string) => {
+    setInputText(suggestion);
+    setShowSuggestions(false);
+  };
   const sendMessage = () => {
     if (inputText.trim() === '') return;
 
@@ -108,13 +120,13 @@ export default function ChatScreen({ navigation }: Props) {
     // partie test de Simuler une réponse de SANA 
     setTimeout(() => {
       const responses = [
-        "Merci pour votre message. Je suis là pour vous aider avec vos questions de santé.",
-        "Je comprends votre préoccupation. Pouvez-vous me donner plus de détails ?",
-        "C'est une excellente question. Laissez-moi vous expliquer...",
-        "Je vais vous aider avec cela. Voici ce que je peux vous dire...",
-        "Votre bien-être est important. Voici mes recommandations...",
-      ];
-      
+        "Merci pour votre question ! 🩺 Je suis là pour vous accompagner dans votre parcours santé.",
+        "Je comprends votre préoccupation. 💭 Pouvez-vous me donner plus de détails pour que je puisse mieux vous aider ?",
+        "Excellente question ! 👍 Laissez-moi vous expliquer cela de manière simple et claire...",
+        "Votre bien-être est ma priorité. 💚 Voici mes recommandations personnalisées pour vous :",
+        "Je vais analyser votre situation. 🔍 Basé sur les informations que vous partagez, voici ce que je peux vous conseiller...",
+        "C'est tout à fait normal de se poser cette question. 🤝 Ensemble, nous allons trouver les meilleures solutions.",
+      ];      
       const randomResponse = responses[Math.floor(Math.random() * responses.length)];
       
       const assistantMessage: Message = {
@@ -145,18 +157,30 @@ export default function ChatScreen({ navigation }: Props) {
     >
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         
+        
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <Ionicons name="arrow-back" size={24} color="#4a90e2" />
           </TouchableOpacity>
           <View style={styles.headerTitle}>
-            <Text style={styles.headerText}>SANA</Text>
-            <Text style={styles.headerSubtext}>Assistant Santé</Text>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                <Ionicons name="medical" size={24} color="#ffffff" />
+              </View>
+              <View style={styles.onlineIndicator} />
+            </View>
+            <View style={styles.titleInfo}>
+              <Text style={styles.headerText}>SANA</Text>
+              <Text style={styles.headerSubtext}>Assistant Santé • En ligne</Text>
+            </View>
           </View>
-          <View style={styles.statusIndicator}>
+          <TouchableOpacity style={styles.menuButton}>
+            <Ionicons name="ellipsis-vertical" size={20} color="#7f8c8d" />
+          </TouchableOpacity>
+        </View>          <View style={styles.statusIndicator}>
             <View style={styles.onlineIndicator} />
           </View>
         </View>
@@ -216,15 +240,40 @@ export default function ChatScreen({ navigation }: Props) {
           )}
         </ScrollView>
 
-        {/* Zone de saisie à régler */}
+        {/* Suggestions rapides */}
+        {showSuggestions && messages.length === 1 && (
+          <View style={styles.suggestionsContainer}>
+            <Text style={styles.suggestionsTitle}>Suggestions rapides :</Text>
+            <View style={styles.suggestionsGrid}>
+              {quickSuggestions.map((suggestion, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.suggestionChip}
+                  onPress={() => handleSuggestionPress(suggestion)}
+                >
+                  <Ionicons name="chatbubble-outline" size={16} color="#4a90e2" />
+                  <Text style={styles.suggestionText}>{suggestion}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Zone de saisie moderne */}
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
+            <TouchableOpacity style={styles.attachButton}>
+              <Ionicons name="add-circle-outline" size={24} color="#7f8c8d" />
+            </TouchableOpacity>
             <TextInput
               style={styles.textInput}
               placeholder="Tapez votre message..."
               placeholderTextColor="#95a5a6"
               value={inputText}
-              onChangeText={setInputText}
+              onChangeText={(text) => {
+                setInputText(text);
+                if (text.length > 0) setShowSuggestions(false);
+              }}
               multiline
               maxLength={500}
               onSubmitEditing={sendMessage}
@@ -238,10 +287,14 @@ export default function ChatScreen({ navigation }: Props) {
               onPress={sendMessage}
               disabled={!inputText.trim()}
             >
-              <Text style={styles.sendButtonText}>→</Text>
+              <Ionicons 
+                name="send" 
+                size={20} 
+                color={inputText.trim() ? "#ffffff" : "#bdc3c7"} 
+              />
             </TouchableOpacity>
           </View>
-        </View>
+        </View>        </View>
       </Animated.View>
     </KeyboardAvoidingView>
   );
