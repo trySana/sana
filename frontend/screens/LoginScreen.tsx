@@ -45,7 +45,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const handleLogin = async () => {
     setIsLoading(true);
-    // Simulation d'une connexion
     setTimeout(() => {
       setIsLoading(false);
       if (onLoginSuccess) {
@@ -56,7 +55,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const handleSocialLogin = (provider: string) => {
     console.log(`Login with ${provider}`);
-    // TODO: Implémenter la connexion sociale
   };
 
   return (
@@ -76,148 +74,133 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <FadeInView delay={200} style={styles.cardContainer}>
-            <View style={styles.card}>
-              {/* Logo */}
-              <View style={styles.logoContainer}>
-                <SanaLogo size={80} />
-              </View>
+          {/* Main Container - Perfectly Centered */}
+          <View style={styles.mainContainer}>
+            {/* Logo Section */}
+            <FadeInView delay={100} style={styles.logoSection}>
+              <SanaLogo size={56} />
+            </FadeInView>
 
-              {/* Titre et description */}
-              <View style={styles.headerContainer}>
-                <Text style={styles.title}>Login</Text>
-                <Text style={styles.description}>
-                  Enter your email and password to log in
-                </Text>
-              </View>
+            {/* Welcome Text */}
+            <FadeInView delay={200} style={styles.welcomeSection}>
+              <Text style={styles.welcomeTitle}>Welcome back</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Sign in to your account
+              </Text>
+            </FadeInView>
 
-              {/* Formulaire */}
-              <View style={styles.formContainer}>
+            {/* Login Form */}
+            <FadeInView delay={300} style={styles.formContainer}>
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
                 <Input
                   label=""
                   value={email}
                   onChangeText={setEmail}
-                  placeholder="thibaud.combaz@gmail.com"
+                  placeholder="Enter your email"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   leftIcon="mail-outline"
-                  containerStyle={styles.inputContainer}
                 />
+              </View>
 
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
                 <Input
                   label=""
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   secureTextEntry={!showPassword}
                   rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
                   onRightIconPress={() => setShowPassword(!showPassword)}
                   leftIcon="lock-closed-outline"
-                  containerStyle={styles.inputContainer}
                 />
-
-                {/* Remember me + Forgot password */}
-                <View style={styles.optionsContainer}>
-                  <TouchableOpacity
-                    style={styles.rememberMeContainer}
-                    onPress={() => setRememberMe(!rememberMe)}
-                  >
-                    <View
-                      style={[
-                        styles.checkbox,
-                        rememberMe && styles.checkboxChecked,
-                      ]}
-                    >
-                      {rememberMe && (
-                        <Ionicons
-                          name="checkmark"
-                          size={12}
-                          color={colors.white}
-                        />
-                      )}
-                    </View>
-                    <Text style={styles.rememberMeText}>Remember me</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity onPress={onForgotPassword}>
-                    <Text style={styles.forgotPasswordText}>
-                      Forgot Password ?
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Bouton de connexion */}
-                <Button
-                  title="Log In"
-                  onPress={handleLogin}
-                  loading={isLoading}
-                  style={styles.loginButton}
-                />
-
-                {/* Séparateur */}
-                <View style={styles.separatorContainer}>
-                  <View style={styles.separatorLine} />
-                  <Text style={styles.separatorText}>Or login with</Text>
-                  <View style={styles.separatorLine} />
-                </View>
-
-                {/* Boutons sociaux */}
-                <View style={styles.socialContainer}>
-                  <TouchableOpacity
-                    style={styles.socialButton}
-                    onPress={() => handleSocialLogin("google")}
-                  >
-                    <Text
-                      style={[styles.socialButtonText, { color: "#4285F4" }]}
-                    >
-                      G
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.socialButton}
-                    onPress={() => handleSocialLogin("facebook")}
-                  >
-                    <Text
-                      style={[styles.socialButtonText, { color: "#1877F2" }]}
-                    >
-                      f
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.socialButton}
-                    onPress={() => handleSocialLogin("apple")}
-                  >
-                    <Ionicons name="logo-apple" size={20} color="#000000" />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.socialButton}
-                    onPress={() => handleSocialLogin("phone")}
-                  >
-                    <Ionicons
-                      name="call-outline"
-                      size={20}
-                      color={colors.textPrimary}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Lien vers Sign Up */}
-                <View style={styles.signUpContainer}>
-                  <Text style={styles.signUpText}>Don't have an account? </Text>
-                  <TouchableOpacity onPress={onNavigateToSignUp}>
-                    <Text style={styles.signUpLink}>Sign Up</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
-            </View>
-          </FadeInView>
+
+              {/* Remember Me & Forgot Password */}
+              <View style={styles.optionsRow}>
+                <TouchableOpacity
+                  style={styles.rememberContainer}
+                  onPress={() => setRememberMe(!rememberMe)}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      rememberMe && styles.checkboxChecked,
+                    ]}
+                  >
+                    {rememberMe && (
+                      <Ionicons
+                        name="checkmark"
+                        size={12}
+                        color={colors.white}
+                      />
+                    )}
+                  </View>
+                  <Text style={styles.rememberText}>Remember me</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={onForgotPassword}>
+                  <Text style={styles.forgotText}>Forgot password?</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Sign In Button */}
+              <Button
+                title="Sign In"
+                onPress={handleLogin}
+                loading={isLoading}
+                style={styles.signInButton}
+              />
+
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Social Login Buttons */}
+              <View style={styles.socialContainer}>
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={() => handleSocialLogin("Google")}
+                >
+                  <Text style={styles.googleIcon}>G</Text>
+                  <Text style={styles.socialButtonText}>
+                    Continue with Google
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={() => handleSocialLogin("Apple")}
+                >
+                  <Ionicons
+                    name="logo-apple"
+                    size={20}
+                    color={colors.textPrimary}
+                  />
+                  <Text style={styles.socialButtonText}>
+                    Continue with Apple
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Sign Up Link */}
+              <View style={styles.signUpContainer}>
+                <Text style={styles.signUpText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={onNavigateToSignUp}>
+                  <Text style={styles.signUpLink}>Sign Up</Text>
+                </TouchableOpacity>
+              </View>
+            </FadeInView>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Mobile home indicator */}
+      {/* Home Indicator */}
       {Platform.OS === "ios" && <View style={styles.homeIndicator} />}
     </GradientBackground>
   );
@@ -232,140 +215,160 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg,
-    paddingTop: Platform.OS === "ios" ? dimensions.safeAreaTop + 20 : 40,
-    paddingBottom: Platform.OS === "ios" ? dimensions.safeAreaBottom + 20 : 40,
+    justifyContent: "center", // Centrage vertical parfait
+    paddingHorizontal: 32,
+    paddingVertical: 40,
   },
-  cardContainer: {
-    alignItems: "center",
-  },
-  card: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: borderRadius.card,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl,
+
+  // Main Container - Centré
+  mainContainer: {
     width: "100%",
-    maxWidth: 380,
-    ...shadows.lg,
+    maxWidth: 400, // Largeur maximale moderne
+    alignSelf: "center", // Centrage horizontal parfait
   },
-  logoContainer: {
+
+  // Logo Section
+  logoSection: {
     alignItems: "center",
-    marginBottom: spacing.xl,
+    marginBottom: 32,
   },
-  headerContainer: {
+
+  // Welcome Section
+  welcomeSection: {
     alignItems: "center",
-    marginBottom: spacing.xl,
+    marginBottom: 40,
   },
-  title: {
-    fontSize: typography.title1,
-    fontWeight: typography.weights.bold,
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: "700",
     color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    marginBottom: 8,
     textAlign: "center",
   },
-  description: {
-    fontSize: typography.body,
-    fontWeight: typography.weights.regular,
+  welcomeSubtitle: {
+    fontSize: 16,
+    fontWeight: "500",
     color: colors.textSecondary,
     textAlign: "center",
-    lineHeight: typography.body * 1.4,
   },
+
+  // Form Container
   formContainer: {
     width: "100%",
   },
   inputContainer: {
-    marginBottom: spacing.lg,
+    marginBottom: 20,
   },
-  optionsContainer: {
+
+  // Options Row - Remember Me & Forgot Password
+  optionsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: spacing.xl,
+    marginBottom: 32,
   },
-  rememberMeContainer: {
+  rememberContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
   checkbox: {
-    width: 18,
-    height: 18,
+    width: 20, // Plus grand pour meilleure visibilité
+    height: 20,
     borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: colors.separator,
-    marginRight: spacing.sm,
+    borderWidth: 2, // Bordure plus épaisse
+    borderColor: colors.textSecondary, // Couleur plus visible
+    backgroundColor: colors.white,
+    marginRight: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxChecked: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary, // Fond coloré quand coché
     borderColor: colors.primary,
   },
-  rememberMeText: {
-    fontSize: typography.footnote,
-    fontWeight: typography.weights.regular,
-    color: colors.textSecondary,
+  rememberText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.textPrimary, // Couleur plus foncée pour visibilité
   },
-  forgotPasswordText: {
-    fontSize: typography.footnote,
-    fontWeight: typography.weights.medium,
+  forgotText: {
+    fontSize: 14,
+    fontWeight: "600",
     color: colors.primary,
   },
-  loginButton: {
-    marginBottom: spacing.xl,
+
+  // Sign In Button
+  signInButton: {
+    width: "100%",
+    marginBottom: 32,
+    height: 56, // Bouton plus haut pour meilleure accessibilité
   },
-  separatorContainer: {
+
+  // Divider
+  dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: spacing.xl,
+    marginBottom: 32,
   },
-  separatorLine: {
+  dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.separator,
+    backgroundColor: "rgba(0, 0, 0, 0.08)",
   },
-  separatorText: {
-    fontSize: typography.footnote,
-    fontWeight: typography.weights.regular,
+  dividerText: {
+    fontSize: 14,
+    fontWeight: "500",
     color: colors.textSecondary,
-    marginHorizontal: spacing.md,
+    marginHorizontal: 20,
   },
+
+  // Social Buttons
   socialContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: spacing.xl,
+    gap: 16, // Espacement moderne
+    marginBottom: 32,
   },
   socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.separator,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    ...shadows.sm,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1.5, // Bordure plus visible
+    borderColor: "rgba(0, 0, 0, 0.08)",
+    backgroundColor: colors.white,
+    gap: 12, // Espacement entre icône et texte
+    ...shadows.xs, // Ombre légère
+  },
+  googleIcon: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#4285F4", // Couleur officielle Google
   },
   socialButtonText: {
-    fontSize: typography.title3,
-    fontWeight: typography.weights.bold,
+    fontSize: 15,
+    fontWeight: "600",
     color: colors.textPrimary,
   },
+
+  // Sign Up Link
   signUpContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
   signUpText: {
-    fontSize: typography.footnote,
-    fontWeight: typography.weights.regular,
+    fontSize: 15,
+    fontWeight: "500",
     color: colors.textSecondary,
   },
   signUpLink: {
-    fontSize: typography.footnote,
-    fontWeight: typography.weights.semiBold,
+    fontSize: 15,
+    fontWeight: "700",
     color: colors.primary,
   },
+
+  // Home Indicator
   homeIndicator: {
     position: "absolute",
     bottom: 8,

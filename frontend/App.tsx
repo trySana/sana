@@ -5,9 +5,18 @@ import {
   LoginScreen,
   SignUpScreen,
   HomeScreen,
+  ProfileScreen,
+  SettingsScreen,
 } from "./screens";
 
-type AppState = "splash" | "onboarding" | "login" | "signup" | "home";
+type AppState =
+  | "splash"
+  | "onboarding"
+  | "login"
+  | "signup"
+  | "home"
+  | "profile"
+  | "settings";
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>("splash");
@@ -59,8 +68,23 @@ export default function App() {
   };
 
   const handleProfilePress = () => {
-    console.log("Profil pressé");
-    // TODO: Navigation vers profil
+    setAppState("profile");
+    console.log("Navigation vers profil");
+  };
+
+  const handleBackToHome = () => {
+    setAppState("home");
+    console.log("Retour vers home");
+  };
+
+  const handleNavigateToSettings = () => {
+    setAppState("settings");
+    console.log("Navigation vers settings");
+  };
+
+  const handleBackToProfile = () => {
+    setAppState("profile");
+    console.log("Retour vers profil");
   };
 
   // Écran de splash
@@ -104,6 +128,22 @@ export default function App() {
         onProfilePress={handleProfilePress}
       />
     );
+  }
+
+  // Écran de profil
+  if (appState === "profile") {
+    return (
+      <ProfileScreen
+        userName="Thibaud"
+        onBack={handleBackToHome}
+        onNavigateToSettings={handleNavigateToSettings}
+      />
+    );
+  }
+
+  // Écran de paramètres
+  if (appState === "settings") {
+    return <SettingsScreen userName="Thibaud" onBack={handleBackToProfile} />;
   }
 
   // Fallback

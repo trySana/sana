@@ -14,6 +14,7 @@ import {
   FadeInView,
   BottomSheet,
 } from "../components/common";
+import { DashboardContent } from "../components/dashboard";
 import {
   colors,
   typography,
@@ -87,40 +88,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </FadeInView>
       </View>
 
-      {/* Bottom Sheet */}
+      {/* Bottom Sheet avec Dashboard */}
       <BottomSheet
-        title="Plus d'infos"
+        title="Mon Dashboard"
         onClose={() => console.log("BottomSheet fermé")}
-        snapPoints={[0.12, 0.5, 0.85]}
+        snapPoints={[0.08, 0.6, 0.9]}
         initialSnapIndex={0}
       >
-        <View style={styles.bottomSheetContent}>
-          <Text style={styles.infoText}>
-            Explorez les fonctionnalités de Sana pour obtenir des conseils de
-            santé personnalisés.
-          </Text>
-
-          <View style={styles.featureList}>
-            <View style={styles.featureItem}>
-              <Ionicons name="mic" size={24} color={colors.primary} />
-              <Text style={styles.featureText}>
-                Analyse vocale des symptômes
-              </Text>
-            </View>
-
-            <View style={styles.featureItem}>
-              <Ionicons name="medical" size={24} color={colors.primary} />
-              <Text style={styles.featureText}>Conseils médicaux IA</Text>
-            </View>
-
-            <View style={styles.featureItem}>
-              <Ionicons name="time" size={24} color={colors.primary} />
-              <Text style={styles.featureText}>
-                Historique des consultations
-              </Text>
-            </View>
-          </View>
-        </View>
+        <DashboardContent
+          onChatPress={() => console.log("Chat pressé depuis dashboard")}
+        />
       </BottomSheet>
     </GradientBackground>
   );
