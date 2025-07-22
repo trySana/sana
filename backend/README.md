@@ -54,3 +54,9 @@ Available commands :
   make clean        - Clean the temporary files
 
 ```
+
+# Coverage + Test
+```
+pytest --cov=backend/core/utils/whisper_stt --cov-report=term-missing backend/tests/
+open htmlcov/index.html
+```
