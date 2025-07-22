@@ -23,6 +23,7 @@ MONGO_DB=your_database_name
 MONGO_URI=mongodb://localhost:27017
 OPENAI_API_KEY=your_openai_api_key
 
+
 MONGO_USER=your_mongo_user
 MONGO_PWD=your_mongo_password
 MONGO_HOST=your_mongo_host  # Example: cluster0.mongodb.net
@@ -35,4 +36,43 @@ These variables are used by the Pydantic Settings class in config.py.
 
 ```
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Makefile
+
+```
+make help
+```
+
+```
+Available commands :
+  make test         - Launch tests with coverage and colors
+  make test-verbose - Launch tests in verbose mode
+  make coverage     - Generate the HTML coverage report
+  make lint         - Linter the code (flake8)
+  make format       - Format the code (black)
+  make typecheck    - Check the types (mypy)
+  make clean        - Clean the temporary files
+
+```
+
+# Coverage + Test
+```
+pytest --cov=backend/core/utils/whisper_stt --cov-report=term-missing backend/tests/
+open htmlcov/index.html
+
+
+MONGO_USER=your_mongo_user
+MONGO_PWD=your_mongo_password
+MONGO_HOST=your_mongo_host  # Example: cluster0.mongodb.net
+```
+
+These variables are used by the Pydantic Settings class in config.py.
+
+
+### 4. Run the Backend Server
+
+```
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
 ```
