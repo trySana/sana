@@ -8,6 +8,12 @@ httpx
 mongoengine
 pymongo
 motor
-coqui-tts
+mongoengine
+requests
+types-requests
+whisper
+openai-whisper
+types-requests
 jinja2
 weasyprint
+python-multipart

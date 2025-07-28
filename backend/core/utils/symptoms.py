@@ -1,5 +1,7 @@
 from enum import Enum
 
+from core.config import logger
+
 
 class Symptoms(Enum):
     pass
@@ -162,7 +164,7 @@ class SymptomsParser:
         Returns:
             list[str]: All symptoms in the Enum.
         """
-        return [member.value for member in enum]
+        return [member.value for member in enum]  # type: ignore
 
     @staticmethod
     def symptoms_in_message(message: str, symptoms: list[str]) -> list[str]:
@@ -199,11 +201,14 @@ class SymptomsParser:
             tuple[list[str], list[str]]: List of present symptoms,
             List of present categories.
         """
+        logger.info("Parsing for symptoms...")
         found_symptoms = list()
         found_categories = list()
 
         for enum in all_symptom_enums:
-            symptoms = SymptomsParser.get_symptoms(enum=enum)
+            logger.info(f"Looking for matches in {enum.__name__}")
+
+            symptoms = SymptomsParser.get_symptoms(enum=enum)  # type: ignore
 
             matched_symptoms = SymptomsParser.symptoms_in_message(
                 message=message, symptoms=symptoms
@@ -212,5 +217,7 @@ class SymptomsParser:
             if matched_symptoms:
                 found_symptoms.extend(matched_symptoms)
                 found_categories.append(enum.__name__)
+
+        logger.info(f"Symptoms found: {found_symptoms}")
 
         return found_symptoms, found_categories

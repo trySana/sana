@@ -3,8 +3,8 @@ from mongoengine import DateField
 from mongoengine import EnumField
 from mongoengine import StringField
 
-from backend.core.models.base import BaseDocument
-from backend.core.utils.user import Sex
+from core.models.base import BaseDocument
+from core.utils.user import Sex
 
 
 class User(BaseDocument):

@@ -1,32 +1,127 @@
+import hashlib
+
+
+import openai
+from fastapi import FastAPI
+from fastapi import File
+from fastapi import UploadFile
+
+from mongoengine.connection import disconnect_all
+
 from core.config import logger
 from core.config import settings
-from fastapi import FastAPI
-from motor.motor_asyncio import AsyncIOMotorClient
+from core.models.user import Authentification
+from core.models.user import CreateUser
+from core.models.user import User
+from core.utils.connection import database_connection
 
+from core.utils.llm_parser import parse_medical_text
+from core.utils.whisper_stt import WhisperSTT
+
+
+whisper_stt = WhisperSTT()
+
+
+client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+
+logger.info("Starting the API...")
 app = FastAPI()
-mongodb_client = None
-db = None
-
-
-@app.on_event("startup")
-async def startup_db_client():
-    global mongodb_client, db
-    logger.info("Connecting to MongoDB...")
-    mongodb_client = AsyncIOMotorClient(settings.MONGO_URI)
-    db = mongodb_client[settings.MONGO_DB]
-    logger.info("Connected to MongoDB.")
-
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    global mongodb_client  # noqa: F824
-    logger.info("Disconnecting from MongoDB...")
-    if mongodb_client:
-        mongodb_client.close()
-    logger.info("Disconnected from MongoDB.")
+logger.info("API started.")
 
 
 @app.get("/")
 async def read_root():
     logger.info("Route / called")
     return {"message": "Hello World"}
+
+
+@app.post("/create_user/")
+async def create_user(input: CreateUser) -> bool:
+    """Create user
+
+    Args:
+        input (CreateUser): Input
+
+    Returns:
+        bool: True
+    """
+
+    logger.info("Hashing...")
+
+    hasher = hashlib.blake2b(
+        input.password.encode("utf-8"),
+        digest_size=15,
+        salt=settings.SALT.encode("utf-8"),
+    ).hexdigest()
+
+    logger.info("Connecting to database...")
+    database_connection()
+
+    logger.info("Saving...")
+    User(
+        username=input.username,
+        password=hasher,
+        email=input.email,
+        sex=input.sex,
+        date_of_birth=input.date_of_birth,
+    ).save()
+
+    logger.info("Closing database connection...")
+    disconnect_all()
+
+    return True
+
+
+@app.post("/authentificate/")
+async def authentificate(input: Authentification) -> bool:
+    """Authentificate
+
+    Args:
+        input (Authentification): Input
+
+    Raises:
+        Exception: If username and password are wrong.
+
+    Returns:
+        bool: True
+    """
+
+    logger.info("Hashing...")
+
+    hasher = hashlib.blake2b(
+        input.password.encode("utf-8"),
+        digest_size=15,
+        salt=settings.SALT.encode("utf-8"),
+    ).hexdigest()
+
+    logger.info("Connecting to database...")
+    database_connection()
+
+    logger.info("Authentificating...")
+
+    user = User.objects(  # type: ignore[attr-defined]
+        username=input.username, password=hasher
+    ).first()
+
+    if not user:
+        raise Exception("Incorrect username or password.")
+
+    logger.info("Closing database connection...")
+    disconnect_all()
+
+
+    return True
+
+
+@app.post("/stt/")
+async def stt(file: UploadFile = File(...)):
+    temp_path = f"/tmp/{file.filename}"
+    with open(temp_path, "wb") as buffer:
+        buffer.write(await file.read())
+    text = await whisper_stt.transcribe_audio(temp_path)
+    parsed = parse_medical_text(text)
+    return {"text": text, "parsed": parsed}
+
+
+    return True
+

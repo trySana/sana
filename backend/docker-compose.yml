@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      - PYTHONPATH=/app
     container_name: sana-backend
     ports:
       - "8000:8000"
