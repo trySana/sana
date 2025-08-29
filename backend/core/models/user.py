@@ -46,6 +46,10 @@ class Authentification(BaseModel):
 
 
 class UpdateUser(BaseModel):
-    username: Optional[str]
-    password: Optional[str]
-    email: Optional[str]
+    username: str
+    password: str
+    new_username: Optional[str]
+    new_password: Optional[str]
+    new_date_of_birth: Optional[date]
+    new_email: Optional[str]
+    new_sex: Optional[str]

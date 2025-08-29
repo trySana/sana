@@ -14,4 +14,4 @@ types-requests
 whisper
 openai-whisper
 types-requests
-
+python-multipart

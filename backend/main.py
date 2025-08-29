@@ -12,8 +12,10 @@ from mongoengine.connection import disconnect_all
 
 from backend.core.config import logger
 from backend.core.config import settings
+from backend.core.models.MedicalHistory import MedicalHistory
 from backend.core.models.user import Authentification
 from backend.core.models.user import CreateUser
+from backend.core.models.user import UpdateUser
 from backend.core.models.user import User
 from backend.core.utils.connection import database_connection
 
@@ -75,7 +77,7 @@ async def create_user(input: CreateUser) -> bool:
 
 
 @app.post("/authentificate/")
-async def authentificate(input: Authentification) -> bool:
+async def authentificate(input: Authentification) -> dict:
     """Authentificate
 
     Args:
@@ -108,11 +110,62 @@ async def authentificate(input: Authentification) -> bool:
     if not user:
         raise Exception("Incorrect username or password.")
 
+    medical_history = MedicalHistory.get_medical_history(user=user)
+
     logger.info("Closing database connection...")
     disconnect_all()
 
+    return {
+        "username": input.username,
+        "email": user.email,
+        "sex": user.sex,
+        "date_of_birth": user.date_of_birth,
+        "medical_history": medical_history,
+    }
 
-    return True
+
+@app.post("/update/")
+async def update_user(input: UpdateUser):
+    hasher = hashlib.blake2b(
+        input.password.encode("utf-8"),
+        digest_size=15,
+        salt=settings.SALT.encode("utf-8"),
+    ).hexdigest()
+
+    database_connection()
+
+    user = User.objects(  # type: ignore[attr-defined]
+        username=input.username, password=hasher
+    ).first()
+
+    if not user:
+        raise Exception("Incorrect username or password.")
+
+    update = dict()
+
+    if input.new_username:
+        update["username"] = input.new_username
+
+    if input.new_date_of_birth:
+        update["date_of_birth"] = input.new_date_of_birth  # type: ignore[assignment]
+
+    if input.new_email:
+        update["email"] = input.new_email
+
+    if input.new_sex:
+        update["sex"] = input.new_sex
+
+    if input.new_password:
+        update["password"] = hashlib.blake2b(
+            input.new_password.encode("utf-8"),
+            digest_size=15,
+            salt=settings.SALT.encode("utf-8"),
+        ).hexdigest()
+
+    user.update(**update)
+    disconnect_all()
+
+    return user
 
 
 @app.post("/stt/")
@@ -123,7 +176,4 @@ async def stt(file: UploadFile = File(...)):
     text = await whisper_stt.transcribe_audio(temp_path)
     parsed = parse_medical_text(text)
     return {"text": text, "parsed": parsed}
-
-
-    return True
 
