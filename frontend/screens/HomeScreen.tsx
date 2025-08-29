@@ -23,6 +23,7 @@ import {
   shadows,
   borderRadius,
 } from "../constants/theme";
+import { useAuth } from "../contexts/AuthContext";
 
 interface HomeScreenProps {
   userName?: string;
@@ -37,6 +38,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onVoicePress,
   onProfilePress,
 }) => {
+  const { user } = useAuth();
+
   const handleVoicePress = () => {
     if (onVoicePress) {
       onVoicePress();
@@ -55,7 +58,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <FadeInView delay={100} style={styles.header}>
         <View style={styles.welcomeContainer}>
           <Text style={styles.welcomeText}>Welcome,</Text>
-          <Text style={styles.nameText}>{userName} .</Text>
+          <Text style={styles.nameText}>{user?.username || userName} .</Text>
         </View>
 
         <TouchableOpacity style={styles.profileButton} onPress={onProfilePress}>

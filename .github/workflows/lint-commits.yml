@@ -2,7 +2,6 @@ name: Lint Commits
 
 on:
   pull_request:
-    branches: [ main, dev ]
 
 jobs:
   lint-commits:

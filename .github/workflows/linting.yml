@@ -2,15 +2,7 @@ name: Linting
 
 on:
   push:
-    branches: [ main, dev ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/linting.yml'
-  pull_request:
-    branches: [ main, dev ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/linting.yml'
+
 
 jobs:
   lint:

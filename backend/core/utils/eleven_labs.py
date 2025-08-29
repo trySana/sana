@@ -1,6 +1,5 @@
 import requests
-
-from backend.core.config import settings
+from core.config import settings
 
 
 def text_to_speech_file(text: str) -> bytes:

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from backend.core.config import logger
+from core.config import logger
 
 
 class Symptoms(Enum):

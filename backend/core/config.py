@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = ""
     MONGO_HOST: str = "localhost:27017"
-    MONGO_DB: str = "mydb"
+    MONGO_DB: str = "sana_test"
     MONGO_USER: str = ""
     MONGO_PWD: str = ""
     ELEVENLABS_API_KEY: str = ""

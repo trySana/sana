@@ -2,15 +2,7 @@ name: Version Check
 
 on:
   push:
-    branches: [ main,dev ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/version-check.yml'
-  pull_request:
-    branches: [ main,dev ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/version-check.yml'
+
 
 jobs:
   version-check:
