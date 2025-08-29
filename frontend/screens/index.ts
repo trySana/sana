@@ -4,4 +4,8 @@ export { LoginScreen } from "./LoginScreen";
 export { SignUpScreen } from "./SignUpScreen";
 export { HomeScreen } from "./HomeScreen";
 export { ProfileScreen } from "./ProfileScreen";
+export { EditProfileScreen } from "./EditProfileScreen";
+export { SecurityScreen } from "./SecurityScreen";
+export { PrivacyScreen } from "./PrivacyScreen";
+export { AccountScreen } from "./AccountScreen";
 export { SettingsScreen } from "./SettingsScreen";

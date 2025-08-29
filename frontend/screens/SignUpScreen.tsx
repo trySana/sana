@@ -9,8 +9,10 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Modal,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../contexts/AuthContext";
 import {
   GradientBackground,
   Button,
@@ -25,6 +27,7 @@ import {
   shadows,
   borderRadius,
 } from "../constants/theme";
+import GoogleAuthService from "../services/googleAuth";
 
 interface SignUpScreenProps {
   onSignUpSuccess?: () => void;
@@ -51,10 +54,10 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const totalSteps = 3;
 
   // Form data
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [sex, setSex] = useState("MALE");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -65,20 +68,74 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [showCountryModal, setShowCountryModal] = useState(false);
 
+  const { signup, error, clearError } = useAuth();
+
   const handleSignUp = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    console.log("handleSignUp called with data:", {
+      username,
+      email,
+      password: password ? "***" : "undefined",
+      sex,
+      dateOfBirth,
+      confirmPassword: confirmPassword ? "***" : "undefined",
+    });
+
+    if (!username || !email || !password || !sex || !dateOfBirth) {
+      console.log("Missing fields:", {
+        username: !!username,
+        email: !!email,
+        password: !!password,
+        sex: !!sex,
+        dateOfBirth: !!dateOfBirth,
+      });
+      Alert.alert("Erreur", "Veuillez remplir tous les champs");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      console.log("Password mismatch");
+      Alert.alert("Erreur", "Les mots de passe ne correspondent pas");
+      return;
+    }
+
+    console.log("All validations passed, calling API...");
+    try {
+      // Convertir la date en format Date
+      const dateParts = dateOfBirth.split("/");
+      const formattedDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
+
+      console.log("Sending data to API:", {
+        username,
+        email,
+        password: "***",
+        sex,
+        date_of_birth: formattedDate,
+      });
+
+      await signup({
+        username,
+        email,
+        password,
+        sex,
+        date_of_birth: formattedDate,
+      });
+
+      console.log("Signup successful!");
       if (onSignUpSuccess) {
         onSignUpSuccess();
       }
-    }, 1500);
+    } catch (error) {
+      console.error("Signup failed:", error);
+    }
   };
 
   const handleNext = () => {
+    console.log(`Current step: ${currentStep}, Total steps: ${totalSteps}`);
     if (currentStep < totalSteps) {
+      console.log(`Moving to next step: ${currentStep + 1}`);
       setCurrentStep(currentStep + 1);
     } else {
+      console.log("Final step reached, calling handleSignUp");
       handleSignUp();
     }
   };
@@ -96,8 +153,45 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
     setShowCountryModal(false);
   };
 
-  const handleSocialSignUp = (provider: string) => {
-    console.log(`Sign up with ${provider}`);
+  const handleSocialSignUp = async (provider: string) => {
+    try {
+      if (provider === "Google") {
+        const googleAuth = GoogleAuthService.getInstance();
+        const result = await googleAuth.signIn();
+
+        if (result.success && result.user) {
+          // Pré-remplir le formulaire avec les données Google
+          setEmail(result.user.email);
+          setUsername(result.user.email.split("@")[0]); // Utiliser la partie avant @ comme username
+
+          // Si l'utilisateur a un prénom et nom, les utiliser
+          if (result.user.givenName && result.user.familyName) {
+            // On pourrait ajouter des champs pour le prénom et nom si nécessaire
+          }
+
+          // Passer à l'étape suivante
+          if (currentStep < totalSteps) {
+            setCurrentStep(currentStep + 1);
+          }
+
+          Alert.alert(
+            "Succès",
+            `Connecté avec Google en tant que ${result.user.name}`,
+          );
+        } else {
+          Alert.alert("Erreur", result.error || "Échec de la connexion Google");
+        }
+      } else {
+        console.log(`Sign up with ${provider} not implemented yet`);
+        Alert.alert(
+          "Info",
+          `Inscription avec ${provider} pas encore implémentée`,
+        );
+      }
+    } catch (error) {
+      console.error("Social sign up failed:", error);
+      Alert.alert("Erreur", "Impossible de s'inscrire avec Google.");
+    }
   };
 
   const renderProgressBar = () => (
@@ -159,54 +253,77 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 
   const renderStep2 = () => (
     <>
-      {/* Name Fields */}
-      <View style={styles.nameContainer}>
-        <View style={styles.nameInputHalf}>
-          <Input
-            label=""
-            value={firstName}
-            onChangeText={setFirstName}
-            placeholder="First name"
-            autoCapitalize="words"
-          />
-        </View>
+      {/* Username Field */}
+      <View style={styles.inputContainer}>
+        <Input
+          label=""
+          value={username}
+          onChangeText={setUsername}
+          placeholder="Username (5-15 characters)"
+          autoCapitalize="none"
+          leftIcon="person-outline"
+        />
+      </View>
 
-        <View style={styles.nameInputHalf}>
-          <Input
-            label=""
-            value={lastName}
-            onChangeText={setLastName}
-            placeholder="Last name"
-            autoCapitalize="words"
-          />
+      {/* Sex Selection */}
+      <View style={styles.inputContainer}>
+        <View style={styles.sexContainer}>
+          <TouchableOpacity
+            style={[styles.sexButton, sex === "MALE" && styles.sexButtonActive]}
+            onPress={() => setSex("MALE")}
+          >
+            <Text
+              style={[
+                styles.sexButtonText,
+                sex === "MALE" && styles.sexButtonTextActive,
+              ]}
+            >
+              Male
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.sexButton,
+              sex === "FEMALE" && styles.sexButtonActive,
+            ]}
+            onPress={() => setSex("FEMALE")}
+          >
+            <Text
+              style={[
+                styles.sexButtonText,
+                sex === "FEMALE" && styles.sexButtonTextActive,
+              ]}
+            >
+              Female
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Phone with Country Picker */}
-      <View style={styles.phoneContainer}>
-        <TouchableOpacity
-          style={styles.countryButton}
-          onPress={() => setShowCountryModal(true)}
-        >
-          <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
-          <Text style={styles.countryCode}>{selectedCountry.dialCode}</Text>
-          <Ionicons
-            name="chevron-down"
-            size={16}
-            color={colors.textSecondary}
-          />
-        </TouchableOpacity>
-
-        <View style={styles.phoneInputContainer}>
-          <Input
-            label=""
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="Phone number"
-            keyboardType="phone-pad"
-          />
-        </View>
+      {/* Date of Birth */}
+      <View style={styles.inputContainer}>
+        <Input
+          label=""
+          value={dateOfBirth}
+          onChangeText={setDateOfBirth}
+          placeholder="Date of birth (YYYY-MM-DD)"
+          leftIcon="calendar-outline"
+        />
       </View>
+
+      {/* Error Display */}
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            onPress={clearError}
+            style={styles.clearErrorButton}
+          >
+            <Ionicons name="close-circle" size={16} color={colors.error} />
+          </TouchableOpacity>
+        </View>
+      )}
     </>
   );
 
@@ -224,6 +341,61 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
           onRightIconPress={() => setShowPassword(!showPassword)}
           leftIcon="lock-closed-outline"
         />
+      </View>
+
+      {/* Confirm Password Input */}
+      <View style={styles.inputContainer}>
+        <Input
+          label=""
+          value={confirmPassword}
+          onChangeText={(text) => {
+            console.log("confirmPassword onChangeText:", text);
+            setConfirmPassword(text);
+          }}
+          placeholder="Confirm password"
+          secureTextEntry={!showConfirmPassword}
+          rightIcon={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+          onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+          leftIcon="lock-closed-outline"
+        />
+
+        {/* Password Match Indicator */}
+        {confirmPassword && (
+          <View style={styles.passwordMatchContainer}>
+            <Ionicons
+              name={
+                password === confirmPassword
+                  ? "checkmark-circle"
+                  : "close-circle"
+              }
+              size={16}
+              color={
+                password === confirmPassword ? colors.success : colors.error
+              }
+            />
+            <Text
+              style={[
+                styles.passwordMatchText,
+                {
+                  color:
+                    password === confirmPassword
+                      ? colors.success
+                      : colors.error,
+                },
+              ]}
+            >
+              {password === confirmPassword
+                ? "Passwords match"
+                : "Passwords don't match"}
+            </Text>
+          </View>
+        )}
+
+        {/* Debug Info */}
+        <Text style={{ fontSize: 10, color: "red" }}>
+          Debug: confirmPassword = "{confirmPassword}" (length:{" "}
+          {confirmPassword?.length || 0})
+        </Text>
       </View>
 
       {/* Password Requirements */}
@@ -718,5 +890,66 @@ const styles = StyleSheet.create({
     height: 5,
     backgroundColor: "#000000",
     borderRadius: 2.5,
+  },
+
+  // Sex Selection Styles
+  sexContainer: {
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  sexButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    borderWidth: 2,
+    borderColor: colors.separator,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sexButtonActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + "20",
+  },
+  sexButtonText: {
+    fontSize: typography.body,
+    fontWeight: "600",
+    color: colors.textSecondary,
+  },
+  sexButtonTextActive: {
+    color: colors.primary,
+  },
+
+  // Error styles
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.error + "20",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+  },
+  errorText: {
+    flex: 1,
+    color: colors.error,
+    fontSize: typography.footnote,
+    fontFamily: "System",
+  },
+  clearErrorButton: {
+    marginLeft: spacing.sm,
+    padding: spacing.xs,
+  },
+
+  // Password Match Indicator
+  passwordMatchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  passwordMatchText: {
+    fontSize: typography.footnote,
+    fontFamily: "System",
   },
 });

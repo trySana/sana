@@ -1,8 +1,7 @@
 import json
 
 import openai
-
-from backend.core.config import settings
+from core.config import settings
 
 client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
 

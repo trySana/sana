@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { GradientBackground, FadeInView } from "../components/common";
@@ -19,10 +20,14 @@ import {
   shadows,
   borderRadius,
 } from "../constants/theme";
+import { useAuth } from "../contexts/AuthContext";
 
 interface SettingsScreenProps {
   onBack?: () => void;
   userName?: string;
+  onNavigateToSecurity?: () => void;
+  onNavigateToPrivacy?: () => void;
+  onNavigateToAccount?: () => void;
 }
 
 interface SettingSectionProps {
@@ -117,7 +122,12 @@ const SettingItem: React.FC<SettingItemProps> = ({
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onBack,
   userName = "Thibaud",
+  onNavigateToSecurity,
+  onNavigateToPrivacy,
+  onNavigateToAccount,
 }) => {
+  const { logout, user } = useAuth();
+
   // Settings states
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -133,15 +143,36 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   const handleAccountSettings = () => {
-    console.log("Navigate to Account Settings");
+    console.log("handleAccountSettings appelé");
+    console.log("onNavigateToAccount:", onNavigateToAccount);
+    if (onNavigateToAccount) {
+      console.log("Navigation vers Account...");
+      onNavigateToAccount();
+    } else {
+      console.log("onNavigateToAccount n'est pas défini");
+    }
   };
 
   const handlePrivacy = () => {
-    console.log("Navigate to Privacy Settings");
+    console.log("handlePrivacy appelé");
+    console.log("onNavigateToPrivacy:", onNavigateToPrivacy);
+    if (onNavigateToPrivacy) {
+      console.log("Navigation vers Privacy...");
+      onNavigateToPrivacy();
+    } else {
+      console.log("onNavigateToPrivacy n'est pas défini");
+    }
   };
 
   const handleSecurity = () => {
-    console.log("Navigate to Security Settings");
+    console.log("handleSecurity appelé");
+    console.log("onNavigateToSecurity:", onNavigateToSecurity);
+    if (onNavigateToSecurity) {
+      console.log("Navigation vers Security...");
+      onNavigateToSecurity();
+    } else {
+      console.log("onNavigateToSecurity n'est pas défini");
+    }
   };
 
   const handleLanguage = () => {
@@ -157,7 +188,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   const handleSignOut = () => {
-    console.log("Sign out");
+    Alert.alert("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?", [
+      {
+        text: "Annuler",
+        style: "cancel",
+      },
+      {
+        text: "Déconnexion",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await logout();
+          } catch (error) {
+            console.error("Erreur lors de la déconnexion:", error);
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -187,7 +234,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <SettingItem
               icon="person-outline"
               label="Account Information"
-              value={userName}
+              value={user?.username || userName}
               onPress={handleAccountSettings}
             />
             <SettingItem
@@ -303,6 +350,48 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               icon="star-outline"
               label="Rate the App"
               onPress={handleSupport}
+            />
+          </SettingSection>
+        </FadeInView>
+
+        {/* Test Navigation Section */}
+        <FadeInView delay={650}>
+          <SettingSection title="Test Navigation">
+            <SettingItem
+              icon="bug-outline"
+              label="Test Security"
+              onPress={() => {
+                console.log("Test direct Security");
+                if (onNavigateToSecurity) {
+                  onNavigateToSecurity();
+                } else {
+                  console.log("onNavigateToSecurity UNDEFINED");
+                }
+              }}
+            />
+            <SettingItem
+              icon="bug-outline"
+              label="Test Privacy"
+              onPress={() => {
+                console.log("Test direct Privacy");
+                if (onNavigateToPrivacy) {
+                  onNavigateToPrivacy();
+                } else {
+                  console.log("onNavigateToPrivacy UNDEFINED");
+                }
+              }}
+            />
+            <SettingItem
+              icon="bug-outline"
+              label="Test Account"
+              onPress={() => {
+                console.log("Test direct Account");
+                if (onNavigateToAccount) {
+                  onNavigateToAccount();
+                } else {
+                  console.log("onNavigateToAccount UNDEFINED");
+                }
+              }}
             />
           </SettingSection>
         </FadeInView>

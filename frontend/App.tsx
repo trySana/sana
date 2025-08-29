@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import {
   SplashScreen,
   OnboardingScreen,
@@ -6,8 +7,13 @@ import {
   SignUpScreen,
   HomeScreen,
   ProfileScreen,
+  EditProfileScreen,
+  SecurityScreen,
+  PrivacyScreen,
+  AccountScreen,
   SettingsScreen,
 } from "./screens";
+import { LoadingScreen } from "./components/common";
 
 type AppState =
   | "splash"
@@ -16,10 +22,33 @@ type AppState =
   | "signup"
   | "home"
   | "profile"
-  | "settings";
+  | "editProfile"
+  | "settings"
+  | "security"
+  | "privacy"
+  | "account";
 
-export default function App() {
+function App() {
   const [appState, setAppState] = useState<AppState>("splash");
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Navigation automatique basée sur l'état d'authentification
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated && appState === "login") {
+        setAppState("home");
+        console.log("Utilisateur authentifié → Navigation vers home");
+      } else if (
+        !isAuthenticated &&
+        appState !== "splash" &&
+        appState !== "onboarding" &&
+        appState !== "login"
+      ) {
+        setAppState("login");
+        console.log("Utilisateur non authentifié → Navigation vers login");
+      }
+    }
+  }, [isAuthenticated, isLoading]);
 
   // Navigation handlers
   const handleSplashComplete = () => {
@@ -33,13 +62,13 @@ export default function App() {
   };
 
   const handleLoginSuccess = () => {
-    setAppState("home");
-    console.log("Login réussi → Navigation vers home");
+    // Plus besoin de gérer manuellement la redirection
+    console.log("Login réussi → Redirection automatique via contexte");
   };
 
   const handleSignUpSuccess = () => {
-    setAppState("home");
-    console.log("Sign up réussi → Navigation vers home");
+    // Plus besoin de gérer manuellement la redirection
+    console.log("Sign up réussi → Redirection automatique via contexte");
   };
 
   const handleNavigateToSignUp = () => {
@@ -82,10 +111,49 @@ export default function App() {
     console.log("Navigation vers settings");
   };
 
+  const handleNavigateToEditProfile = () => {
+    setAppState("editProfile");
+    console.log("Navigation vers édition du profil");
+  };
+
+  const handleNavigateToSecurity = () => {
+    console.log(
+      "handleNavigateToSecurity appelé - changement d'état vers security",
+    );
+    setAppState("security");
+    console.log("Navigation vers sécurité");
+  };
+
+  const handleNavigateToPrivacy = () => {
+    console.log(
+      "handleNavigateToPrivacy appelé - changement d'état vers privacy",
+    );
+    setAppState("privacy");
+    console.log("Navigation vers confidentialité");
+  };
+
+  const handleNavigateToAccount = () => {
+    console.log(
+      "handleNavigateToAccount appelé - changement d'état vers account",
+    );
+    setAppState("account");
+    console.log("Navigation vers informations du compte");
+  };
+
   const handleBackToProfile = () => {
     setAppState("profile");
     console.log("Retour vers profil");
   };
+
+  const handleBackToSettings = () => {
+    setAppState("settings");
+    console.log("Retour vers paramètres");
+  };
+
+  // Écran de chargement pendant la vérification de l'authentification
+  if (isLoading) {
+    return <LoadingScreen message="Vérification de la connexion..." />;
+  }
 
   // Écran de splash
   if (appState === "splash") {
@@ -137,15 +205,58 @@ export default function App() {
         userName="Thibaud"
         onBack={handleBackToHome}
         onNavigateToSettings={handleNavigateToSettings}
+        onNavigateToEditProfile={handleNavigateToEditProfile}
       />
     );
   }
 
+  // Écran d'édition du profil
+  if (appState === "editProfile") {
+    return (
+      <EditProfileScreen
+        onBack={handleBackToProfile}
+        onSave={handleBackToProfile}
+      />
+    );
+  }
+
+  // Écran de sécurité
+  if (appState === "security") {
+    return <SecurityScreen onBack={handleBackToSettings} />;
+  }
+
+  // Écran de confidentialité
+  if (appState === "privacy") {
+    return <PrivacyScreen onBack={handleBackToSettings} />;
+  }
+
+  // Écran d'informations du compte
+  if (appState === "account") {
+    return <AccountScreen onBack={handleBackToSettings} />;
+  }
+
   // Écran de paramètres
   if (appState === "settings") {
-    return <SettingsScreen userName="Thibaud" onBack={handleBackToProfile} />;
+    return (
+      <SettingsScreen
+        userName="Thibaud"
+        onBack={handleBackToProfile}
+        onNavigateToSecurity={handleNavigateToSecurity}
+        onNavigateToPrivacy={handleNavigateToPrivacy}
+        onNavigateToAccount={handleNavigateToAccount}
+      />
+    );
   }
 
   // Fallback
   return null;
+}
+
+// Wrapper principal avec AuthProvider
+export default function AppWrapper() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
 }

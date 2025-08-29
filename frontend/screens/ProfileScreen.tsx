@@ -1,106 +1,322 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  StatusBar,
-  Platform,
   TouchableOpacity,
-  Image,
   ScrollView,
-  Switch,
-  Animated,
+  Alert,
+  Platform,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import { GradientBackground, FadeInView } from "../components/common";
+import { useAuth } from "../contexts/AuthContext";
+import { ApiService, HealthInfoRequest } from "../services/api";
+import { colors, typography, spacing } from "../constants/theme";
 import {
-  colors,
-  typography,
-  spacing,
-  dimensions,
-  shadows,
-  borderRadius,
-} from "../constants/theme";
+  GradientBackground,
+  FadeInView,
+  Button,
+  Input,
+} from "../components/common";
 
 interface ProfileScreenProps {
-  onBack?: () => void;
-  onNavigateToSettings?: () => void;
-  userName?: string;
-  userImage?: string;
+  userName: string;
+  onBack: () => void;
+  onNavigateToSettings: () => void;
+  onNavigateToEditProfile: () => void;
 }
+
+interface HealthFormData {
+  height: string;
+  weight: string;
+  blood_type: string;
+  medical_conditions: string;
+  allergies: string;
+  medications: string;
+  smoking_status: string;
+  alcohol_consumption: string;
+  exercise_frequency: string;
+  family_history: string;
+}
+
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const SMOKING_STATUS = ["Jamais", "Ancien fumeur", "Fumeur actuel"];
+const ALCOHOL_CONSUMPTION = ["Aucune", "Occasionnelle", "Modérée", "Élevée"];
+const EXERCISE_FREQUENCY = [
+  "Jamais",
+  "Rarement",
+  "Parfois",
+  "Souvent",
+  "Quotidiennement",
+];
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onBack,
   onNavigateToSettings,
-  userName = "Thibaud",
-  userImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+  onNavigateToEditProfile,
 }) => {
-  const [isOpen, setIsOpen] = React.useState(true);
-  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+  const { user } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [healthData, setHealthData] = useState<HealthFormData>({
+    height: "",
+    weight: "",
+    blood_type: "",
+    medical_conditions: "",
+    allergies: "",
+    medications: "",
+    smoking_status: "",
+    alcohol_consumption: "",
+    exercise_frequency: "",
+    family_history: "",
+  });
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
+  useEffect(() => {
+    loadHealthData();
+  }, []);
+
+  const loadHealthData = async () => {
+    if (!user?.username) return;
+
+    try {
+      setIsLoading(true);
+      console.log(
+        `[ProfileScreen] Chargement des données de santé pour ${user.username}`,
+      );
+
+      const response = await ApiService.getHealthInfo(user.username);
+      console.log(`[ProfileScreen] Réponse reçue:`, response);
+
+      if (response.success && response.health_data) {
+        const data = response.health_data;
+        console.log(`[ProfileScreen] Données de santé reçues:`, data);
+
+        setHealthData({
+          height: data.height?.toString() || "",
+          weight: data.weight?.toString() || "",
+          blood_type: data.blood_type || "",
+          medical_conditions: data.medical_conditions?.join(", ") || "",
+          allergies: data.allergies?.join(", ") || "",
+          medications: data.medications?.join(", ") || "",
+          smoking_status: data.smoking_status || "",
+          alcohol_consumption: data.alcohol_consumption || "",
+          exercise_frequency: data.exercise_frequency || "",
+          family_history: data.family_history?.join(", ") || "",
+        });
+
+        console.log(
+          `[ProfileScreen] Données mises à jour dans l'état:`,
+          healthData,
+        );
+      } else {
+        console.warn(`[ProfileScreen] Réponse sans succès:`, response.message);
+        Alert.alert(
+          "Information",
+          response.message || "Aucune information de santé trouvée",
+        );
+      }
+    } catch (error: any) {
+      console.error("Erreur lors du chargement des données de santé:", error);
+
+      let errorMessage = "Erreur lors du chargement des données de santé";
+      if (error.userMessage) {
+        errorMessage = error.userMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert("Erreur", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const onPressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.95,
-      useNativeDriver: true,
-    }).start();
+  const handleSave = async () => {
+    if (!user?.username) return;
+
+    try {
+      setIsLoading(true);
+      console.log(
+        `[ProfileScreen] Sauvegarde des données de santé pour ${user.username}`,
+      );
+
+      // Convertir les données du formulaire
+      const healthInfo: HealthInfoRequest = {
+        height: healthData.height ? parseInt(healthData.height) : undefined,
+        weight: healthData.weight ? parseInt(healthData.weight) : undefined,
+        blood_type: healthData.blood_type || undefined,
+        medical_conditions: healthData.medical_conditions
+          ? healthData.medical_conditions
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+          : undefined,
+        allergies: healthData.allergies
+          ? healthData.allergies
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+          : undefined,
+        medications: healthData.medications
+          ? healthData.medications
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+          : undefined,
+        smoking_status: healthData.smoking_status || undefined,
+        alcohol_consumption: healthData.alcohol_consumption || undefined,
+        exercise_frequency: healthData.exercise_frequency || undefined,
+        family_history: healthData.family_history
+          ? healthData.family_history
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+          : undefined,
+      };
+
+      console.log(`[ProfileScreen] Données à envoyer:`, healthInfo);
+
+      const response = await ApiService.updateHealthInfo(
+        user.username,
+        healthInfo,
+      );
+
+      console.log(`[ProfileScreen] Réponse de sauvegarde:`, response);
+
+      if (response.success) {
+        Alert.alert(
+          "Succès",
+          "Informations de santé mises à jour avec succès",
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                setIsEditing(false);
+                // Recharger les données pour s'assurer qu'elles sont à jour
+                loadHealthData();
+              },
+            },
+          ],
+        );
+      } else {
+        Alert.alert("Erreur", response.message || "Échec de la mise à jour");
+      }
+    } catch (error: any) {
+      console.error("Erreur lors de la sauvegarde:", error);
+
+      let errorMessage = "Impossible de sauvegarder les informations de santé";
+      if (error.userMessage) {
+        errorMessage = error.userMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert("Erreur", errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const onPressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
+  const handleCancel = () => {
+    setIsEditing(false);
+    loadHealthData(); // Recharger les données originales
   };
 
-  const jobsData = [
-    { title: "Product Design", icon: "color-palette-outline" },
-    { title: "Front end", icon: "code-slash-outline" },
-    { title: "Visual Designer", icon: "brush-outline" },
-    { title: "Voyager", icon: "airplane-outline" },
-  ];
+  const renderField = (
+    label: string,
+    value: string,
+    key: keyof HealthFormData,
+    placeholder?: string,
+    multiline = false,
+  ) => (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      {isEditing ? (
+        <Input
+          value={value}
+          onChangeText={(text) =>
+            setHealthData((prev) => ({ ...prev, [key]: text }))
+          }
+          placeholder={placeholder || `Entrez votre ${label.toLowerCase()}`}
+          multiline={multiline}
+          style={styles.input}
+        />
+      ) : (
+        <View style={styles.fieldValueContainer}>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Chargement...</Text>
+            </View>
+          ) : (
+            <Text style={styles.fieldValue}>{value || "Non renseigné"}</Text>
+          )}
+        </View>
+      )}
+    </View>
+  );
+
+  const renderSelectField = (
+    label: string,
+    value: string,
+    key: keyof HealthFormData,
+    options: string[],
+  ) => (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      {isEditing ? (
+        <View style={styles.selectContainer}>
+          {options.map((option) => (
+            <TouchableOpacity
+              key={option}
+              style={[
+                styles.selectOption,
+                value === option && styles.selectOptionSelected,
+              ]}
+              onPress={() =>
+                setHealthData((prev) => ({ ...prev, [key]: option }))
+              }
+            >
+              <Text
+                style={[
+                  styles.selectOptionText,
+                  value === option && styles.selectOptionTextSelected,
+                ]}
+              >
+                {option}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : (
+        <Text style={styles.fieldValue}>{value || "Non renseigné"}</Text>
+      )}
+    </View>
+  );
 
   return (
     <GradientBackground variant="main" style={styles.container}>
       <StatusBar
-        barStyle="dark-content"
+        style="dark"
         backgroundColor="transparent"
         translucent={Platform.OS === "android"}
       />
 
-      {/* Header Épuré */}
-      <FadeInView delay={100} style={styles.simpleHeader}>
-        <TouchableOpacity
-          style={styles.simpleBackButton}
-          onPress={handleBack}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-        >
-          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </Animated.View>
+      {/* Header */}
+      <FadeInView delay={100} style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.simpleHeaderTitle}>Profile</Text>
-
-        {/* Settings Button */}
+        <Text style={styles.headerTitle}>Profil Santé</Text>
         <TouchableOpacity
           style={styles.settingsButton}
           onPress={onNavigateToSettings}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
         >
-          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <Ionicons
-              name="settings-outline"
-              size={24}
-              color={colors.textPrimary}
-            />
-          </Animated.View>
+          <Ionicons
+            name="settings-outline"
+            size={24}
+            color={colors.textPrimary}
+          />
         </TouchableOpacity>
       </FadeInView>
 
@@ -109,149 +325,144 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Section Ultra-Épurée */}
-        <FadeInView delay={200} style={styles.profileSection}>
-          <View style={styles.cleanProfileCard}>
-            <View style={styles.profileImageContainer}>
-              <Image source={{ uri: userImage }} style={styles.profileImage} />
-              <View style={styles.onlineIndicator} />
+        {/* Informations utilisateur */}
+        <FadeInView delay={200} style={styles.userSection}>
+          <View style={styles.profileHeader}>
+            <View style={styles.profileImage}>
+              <Ionicons name="person" size={40} color={colors.primary} />
             </View>
-            <Text style={styles.profileName}>{userName}</Text>
-            <Text style={styles.profileSubtitle}>Creative Professional</Text>
-          </View>
-        </FadeInView>
-
-        {/* Info Cards Ultra-Épurées */}
-        <FadeInView delay={300} style={styles.infoSection}>
-          <View style={styles.cleanInfoContainer}>
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Ionicons
-                  name="briefcase-outline"
-                  size={18}
-                  color={colors.primary}
-                />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Profession</Text>
-                  <Text style={styles.infoValue}>Contractor</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.cleanSeparator} />
-
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Ionicons
-                  name="call-outline"
-                  size={18}
-                  color={colors.primary}
-                />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Contact</Text>
-                  <Text style={styles.infoValue}>+234 806 2344 4675</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.cleanSeparator} />
-
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Ionicons
-                  name="location-outline"
-                  size={18}
-                  color={colors.primary}
-                />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Location</Text>
-                  <Text style={styles.infoValue}>Lagos</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.cleanSeparator} />
-
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Ionicons
-                  name={
-                    isOpen ? "checkmark-circle-outline" : "close-circle-outline"
-                  }
-                  size={18}
-                  color={isOpen ? "#4CAF50" : "#FF6B6B"}
-                />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoLabel}>Position</Text>
-                  <Text
-                    style={[
-                      styles.infoValue,
-                      { color: isOpen ? "#4CAF50" : "#FF6B6B" },
-                    ]}
-                  >
-                    {isOpen ? "Open" : "Closed"}
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={isOpen}
-                onValueChange={setIsOpen}
-                trackColor={{ false: "#E0E0E0", true: colors.primary }}
-                thumbColor={colors.white}
-                style={styles.cleanSwitch}
-              />
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>
+                {user?.username || "Utilisateur"}
+              </Text>
+              <Text style={styles.profileSubtitle}>
+                {user?.email || "email@example.com"}
+              </Text>
             </View>
           </View>
         </FadeInView>
 
-        {/* Modern Jobs Section */}
-        <FadeInView delay={400} style={styles.jobsSection}>
-          <Text style={styles.modernSectionTitle}>Skills & Expertise</Text>
+        {/* Actions */}
+        <FadeInView delay={300} style={styles.actionsSection}>
+          <Button
+            title={isEditing ? "Sauvegarder" : "Modifier le profil"}
+            onPress={isEditing ? handleSave : () => setIsEditing(true)}
+            variant="primary"
+            loading={isLoading}
+            style={styles.actionButton}
+          />
+          {isEditing && (
+            <Button
+              title="Annuler"
+              onPress={handleCancel}
+              variant="secondary"
+              style={styles.actionButton}
+            />
+          )}
+          {!isEditing && (
+            <Button
+              title="Rafraîchir les données"
+              onPress={loadHealthData}
+              variant="secondary"
+              loading={isLoading}
+              style={styles.actionButton}
+            />
+          )}
+        </FadeInView>
 
-          <View style={styles.cleanJobsGrid}>
-            {jobsData.map((job, index) => (
-              <FadeInView key={index} delay={500 + index * 100}>
-                <View style={styles.cleanJobCard}>
-                  <Ionicons
-                    name={job.icon as any}
-                    size={20}
-                    color={colors.primary}
-                  />
-                  <Text style={styles.cleanJobText}>{job.title}</Text>
-                </View>
-              </FadeInView>
-            ))}
+        {/* Informations de santé */}
+        <FadeInView delay={400}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Informations Physiques</Text>
+            {renderField("Taille (cm)", healthData.height, "height", "Ex: 175")}
+            {renderField("Poids (kg)", healthData.weight, "weight", "Ex: 70")}
+            {renderSelectField(
+              "Groupe sanguin",
+              healthData.blood_type,
+              "blood_type",
+              BLOOD_TYPES,
+            )}
           </View>
         </FadeInView>
 
-        {/* Stats Section - Ultra Épurée */}
-        <FadeInView delay={600} style={styles.cleanStatsSection}>
-          {/* Simple Stats Grid */}
-          <View style={styles.cleanStatsGrid}>
-            <View style={styles.cleanStatCard}>
-              <Text style={styles.cleanStatNumber}>4.3</Text>
-              <Text style={styles.cleanStatLabel}>Rating</Text>
-            </View>
-
-            <View style={styles.cleanStatCard}>
-              <Text style={styles.cleanStatNumber}>37</Text>
-              <Text style={styles.cleanStatLabel}>Projects</Text>
-            </View>
-
-            <View style={styles.cleanStatCard}>
-              <Text style={styles.cleanStatNumber}>02</Text>
-              <Text style={styles.cleanStatLabel}>Active</Text>
-            </View>
-          </View>
-
-          {/* Simple Pay Range */}
-          <View style={styles.cleanPayCard}>
-            <Text style={styles.cleanPayLabel}>Daily Rate</Text>
-            <Text style={styles.cleanPayValue}>$150 - $200</Text>
+        <FadeInView delay={500}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Antécédents Médicaux</Text>
+            {renderField(
+              "Maladies chroniques",
+              healthData.medical_conditions,
+              "medical_conditions",
+              "Ex: Diabète, Hypertension",
+              true,
+            )}
+            {renderField(
+              "Allergies",
+              healthData.allergies,
+              "allergies",
+              "Ex: Pénicilline, Pollen",
+              true,
+            )}
+            {renderField(
+              "Médicaments actuels",
+              healthData.medications,
+              "medications",
+              "Ex: Aspirine, Vitamine D",
+              true,
+            )}
           </View>
         </FadeInView>
 
-        <View style={{ height: 100 }} />
+        <FadeInView delay={600}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Mode de Vie</Text>
+            {renderSelectField(
+              "Statut tabagique",
+              healthData.smoking_status,
+              "smoking_status",
+              SMOKING_STATUS,
+            )}
+            {renderSelectField(
+              "Consommation d'alcool",
+              healthData.alcohol_consumption,
+              "alcohol_consumption",
+              ALCOHOL_CONSUMPTION,
+            )}
+            {renderSelectField(
+              "Fréquence d'exercice",
+              healthData.exercise_frequency,
+              "exercise_frequency",
+              EXERCISE_FREQUENCY,
+            )}
+          </View>
+        </FadeInView>
+
+        <FadeInView delay={700}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Antécédents Familiaux</Text>
+            {renderField(
+              "Maladies familiales",
+              healthData.family_history,
+              "family_history",
+              "Ex: Cancer, Maladie cardiaque",
+              true,
+            )}
+          </View>
+        </FadeInView>
+
+        {/* Note importante */}
+        <FadeInView delay={800}>
+          <View style={styles.noteSection}>
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color={colors.warning}
+            />
+            <Text style={styles.noteText}>
+              Ces informations nous aident à vous fournir un diagnostic plus
+              précis et des recommandations personnalisées.
+            </Text>
+          </View>
+        </FadeInView>
       </ScrollView>
     </GradientBackground>
   );
@@ -260,224 +471,170 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.OS === "ios" ? dimensions.safeAreaTop : 35,
   },
-
-  // Header Épuré
-  simpleHeader: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    marginBottom: 32,
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.lg,
+    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    paddingBottom: spacing.md,
   },
-  simpleBackButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 16,
+  backButton: {
+    padding: spacing.sm,
   },
-  simpleHeaderTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+  headerTitle: {
+    fontSize: typography.h2,
     color: colors.textPrimary,
-    flex: 1, // Allow title to take remaining space
+    flex: 1,
+    textAlign: "center",
   },
   settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: spacing.sm,
   },
-
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    paddingBottom: spacing.xl,
   },
-
-  // Modern Profile Section - Épuré
-  profileSection: {
-    marginBottom: 40,
+  userSection: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
-  cleanProfileCard: {
+  profileHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 48, // Espacement vertical généreux
-    paddingHorizontal: 24, // Espacement horizontal modéré
-    borderRadius: 0, // Suppression des coins arrondis pour épurement
-    backgroundColor: "transparent", // Complètement transparent
-    borderWidth: 0,
-    ...shadows.none, // Aucune ombre
-  },
-  profileImageContainer: {
-    position: "relative",
-    marginBottom: 20,
+    backgroundColor: colors.white,
+    borderRadius: spacing.md,
+    padding: spacing.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 4,
-    borderColor: "rgba(255, 255, 255, 0.5)",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
   },
-  onlineIndicator: {
-    position: "absolute",
-    bottom: 5,
-    right: 5,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#4CAF50",
-    borderWidth: 3,
-    borderColor: colors.white,
+  profileInfo: {
+    flex: 1,
   },
   profileName: {
-    fontSize: 28,
-    fontWeight: "800",
+    fontSize: typography.h3,
     color: colors.textPrimary,
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   profileSubtitle: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: typography.body,
     color: colors.textSecondary,
-    opacity: 0.8,
   },
-
-  // Info Cards - Ultra Épuré
-  infoSection: {
-    marginBottom: 48,
+  actionsSection: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
-  cleanInfoContainer: {
-    paddingVertical: 24, // Espacement vertical seulement
-    paddingHorizontal: 0, // Supprimé pour plus d'épurement
-    borderRadius: 0, // Complètement géométrique
-    backgroundColor: "transparent", // Transparent
-    borderWidth: 0,
-    ...shadows.none,
+  actionButton: {
+    marginBottom: spacing.sm,
   },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16, // Double espacement
+  section: {
+    backgroundColor: colors.white,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: spacing.md,
+    padding: spacing.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  infoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
+  sectionTitle: {
+    fontSize: typography.h4,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
   },
-  infoTextContainer: {
-    marginLeft: 15,
-    flex: 1,
+  fieldContainer: {
+    marginBottom: spacing.md,
   },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: "500",
+  fieldLabel: {
+    fontSize: typography.caption1,
     color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  infoValue: {
-    fontSize: 16,
+    marginBottom: spacing.xs,
     fontWeight: "600",
+  },
+  fieldValueContainer: {
+    minHeight: 44,
+  },
+  fieldValue: {
+    fontSize: typography.body,
     color: colors.textPrimary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.cardBackground,
+    borderRadius: spacing.sm,
+    textAlignVertical: "center",
   },
-  cleanSeparator: {
-    height: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.06)", // Séparateur très subtil
-    marginVertical: 20, // Plus d'espacement
-    marginHorizontal: 0, // Pleine largeur
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  cleanSwitch: {
-    transform: [{ scale: 0.9 }], // Plus petit pour discrétion
+  loadingText: {
+    fontSize: typography.caption1,
+    color: colors.textSecondary,
+    fontStyle: "italic",
   },
-
-  // Modern Jobs Section - Simplifiée
-  jobsSection: {
-    marginBottom: 50, // Plus d'espace
+  input: {
+    backgroundColor: colors.cardBackground,
+    borderColor: colors.separator,
+    borderWidth: 1,
   },
-  modernSectionTitle: {
-    fontSize: 20, // Plus petit, moins imposant
-    fontWeight: "600", // Moins bold
-    color: colors.textPrimary,
-    textAlign: "left", // Aligné à gauche
-    marginBottom: 24,
-    marginLeft: 8, // Petit décalage
-  },
-  cleanJobsGrid: {
+  selectContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 24, // Plus d'espacement pour épurement
+    gap: spacing.xs,
   },
-  cleanJobCard: {
-    width: "46%", // Plus petit pour le gap augmenté
-    paddingVertical: 24, // Plus d'espacement vertical
-    paddingHorizontal: 16,
-    marginBottom: 0,
-    borderRadius: 0, // Complètement géométrique
-    backgroundColor: "transparent", // Transparent complet
-    borderWidth: 0,
-    alignItems: "center",
-    ...shadows.none,
+  selectOption: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.sm,
+    backgroundColor: colors.cardBackground,
+    borderWidth: 1,
+    borderColor: colors.separator,
   },
-  cleanJobText: {
-    fontSize: 13, // Légèrement plus petit
-    fontWeight: "500", // Moins bold
+  selectOptionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  selectOptionText: {
+    fontSize: typography.caption1,
     color: colors.textPrimary,
-    marginTop: 12, // Plus d'espace
-    textAlign: "center",
-    lineHeight: 16,
   },
-
-  // Stats Section - Ultra Épurée
-  cleanStatsSection: {
-    marginBottom: 40,
+  selectOptionTextSelected: {
+    color: colors.white,
+    fontWeight: "600",
   },
-  cleanStatsGrid: {
+  noteSection: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 32,
+    alignItems: "flex-start",
+    backgroundColor: colors.glassLight,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: spacing.md,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
-  cleanStatCard: {
-    alignItems: "center",
+  noteText: {
+    fontSize: typography.caption1,
+    color: colors.warning,
     flex: 1,
-    paddingVertical: 16,
-  },
-  cleanStatNumber: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  cleanStatLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.textSecondary,
-    textAlign: "center",
-  },
-
-  // Pay Range - Épuré
-  cleanPayCard: {
-    alignItems: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-  },
-  cleanPayLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  cleanPayValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: colors.primary,
+    lineHeight: 20,
   },
 });

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -25,6 +26,8 @@ import {
   shadows,
   borderRadius,
 } from "../constants/theme";
+import { useAuth } from "../contexts/AuthContext";
+import GoogleAuthService from "../services/googleAuth";
 
 interface LoginScreenProps {
   onLoginSuccess?: () => void;
@@ -37,24 +40,68 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onNavigateToSignUp,
   onForgotPassword,
 }) => {
+  const { login, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("thibaud.combaz@gmail.com");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      }
-    }, 1500);
+    if (!email || !password) {
+      Alert.alert("Erreur", "Veuillez remplir tous les champs");
+      return;
+    }
+
+    try {
+      await login({
+        username: email, // L'utilisateur peut se connecter avec son email ou username
+        password: password,
+        rememberMe: rememberMe,
+      });
+
+      // La redirection se fait automatiquement via le contexte
+      // Pas besoin d'appeler onLoginSuccess ici
+    } catch (error) {
+      // L'erreur est gérée par le contexte
+      console.error("Login failed:", error);
+    }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    console.log(`Login with ${provider}`);
+  const handleSocialLogin = async (provider: string) => {
+    try {
+      if (provider === "Google") {
+        const googleAuth = GoogleAuthService.getInstance();
+        const result = await googleAuth.signIn();
+
+        if (result.success && result.user) {
+          // Créer un utilisateur local avec les données Google
+          const googleUser = {
+            username: result.user.email.split("@")[0], // Utiliser la partie avant @ comme username
+            email: result.user.email,
+            sex: "OTHER", // Valeur par défaut
+            date_of_birth: "1990-01-01", // Valeur par défaut
+          };
+
+          // Appeler l'API pour créer ou connecter l'utilisateur
+          // Pour l'instant, on simule une connexion réussie
+          Alert.alert(
+            "Succès",
+            `Connecté avec Google en tant que ${result.user.name}`,
+          );
+        } else {
+          Alert.alert("Erreur", result.error || "Échec de la connexion Google");
+        }
+      } else {
+        console.log(`Login with ${provider} not implemented yet`);
+        Alert.alert(
+          "Info",
+          `Connexion avec ${provider} pas encore implémentée`,
+        );
+      }
+    } catch (error) {
+      console.error("Social login failed:", error);
+      Alert.alert("Erreur", "Impossible de se connecter avec Google.");
+    }
   };
 
   return (
@@ -117,6 +164,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   leftIcon="lock-closed-outline"
                 />
               </View>
+
+              {/* Error Display */}
+              {error && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                  <TouchableOpacity
+                    onPress={clearError}
+                    style={styles.clearErrorButton}
+                  >
+                    <Ionicons
+                      name="close-circle"
+                      size={16}
+                      color={colors.error}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {/* Remember Me & Forgot Password */}
               <View style={styles.optionsRow}>
@@ -378,5 +442,26 @@ const styles = StyleSheet.create({
     height: 5,
     backgroundColor: "#000000",
     borderRadius: 2.5,
+  },
+
+  // Error styles
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.error + "20",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+  },
+  errorText: {
+    flex: 1,
+    color: colors.error,
+    fontSize: typography.footnote,
+    fontFamily: "System",
+  },
+  clearErrorButton: {
+    marginLeft: spacing.sm,
+    padding: spacing.xs,
   },
 });
