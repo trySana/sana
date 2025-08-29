@@ -1,13 +1,9 @@
 # mypy: ignore-errors
-
 from mongoengine import DictField
 from mongoengine import LazyReferenceField
 
 from backend.core.models.base import BaseDocument
-
-from backend.core.models.base import BaseDocument
-from mongoengine import DictField, LazyReferenceField
-
+from backend.core.models.user import User
 
 
 class MedicalHistory(BaseDocument):
@@ -24,3 +20,7 @@ class MedicalHistory(BaseDocument):
         "collection": "MedicalHistory",
         "indexes": ["created_at"],
     }
+
+    @staticmethod
+    def get_medical_history(user: User):
+        return list(__class__.objects(patient=user.pk))
