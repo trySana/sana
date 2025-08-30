@@ -12,6 +12,7 @@ import {
   UpdateProfileRequest,
 } from "../services/api";
 import { SessionManager, SessionData } from "../services/sessionManager";
+import { AppState } from "react-native";
 
 // Types pour l'utilisateur
 export interface User {
@@ -19,6 +20,9 @@ export interface User {
   email: string;
   sex: string;
   date_of_birth: string;
+  phone_number?: string;
+  bio?: string;
+  profile_image?: string;
 }
 
 // Types pour le contexte
@@ -70,6 +74,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Vérifier le statut d'authentification au démarrage
   useEffect(() => {
     checkAuthStatus();
+
+    // Ajouter un listener pour les changements d'état de l'app
+    const handleAppStateChange = () => {
+      // Vérifier la session quand l'app revient au premier plan
+      checkAuthStatus();
+    };
+
+    // Écouter les changements d'état de l'application
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange,
+    );
+
+    return () => {
+      subscription?.remove();
+    };
   }, []);
 
   // Vérifier le statut d'authentification
@@ -103,8 +123,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         "Erreur lors de la vérification du statut d'authentification:",
         error,
       );
-      setIsAuthenticated(false);
-      setUser(null);
+      // En cas d'erreur, on ne déconnecte pas automatiquement
+      // On garde l'état actuel et on essaie de récupérer la session
+      try {
+        const fallbackSession = await SessionManager.getSession();
+        if (fallbackSession) {
+          ApiService.setAuthToken(fallbackSession.token);
+          setUser(fallbackSession.user);
+          setIsAuthenticated(true);
+          console.log("Session récupérée en fallback");
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      } catch (fallbackError) {
+        console.error("Erreur fallback:", fallbackError);
+        setIsAuthenticated(false);
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -181,20 +217,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Déconnexion
   const logout = async () => {
     try {
+      console.log("🚪 [LOGOUT] Début de la déconnexion...");
+
       // Supprimer la session
+      console.log("🚪 [LOGOUT] Suppression de la session...");
       await SessionManager.clearSession();
+      console.log("🚪 [LOGOUT] Session supprimée avec succès");
 
       // Supprimer le token de l'API service
+      console.log("🚪 [LOGOUT] Suppression du token API...");
       ApiService.clearAuthToken();
+      console.log("🚪 [LOGOUT] Token API supprimé");
 
       // Mettre à jour l'état local
+      console.log("🚪 [LOGOUT] Mise à jour de l'état local...");
       setUser(null);
       setIsAuthenticated(false);
+      console.log(
+        "🚪 [LOGOUT] État local mis à jour: user=null, isAuthenticated=false",
+      );
 
-      console.log("Déconnexion réussie, session supprimée");
+      console.log("🚪 [LOGOUT] Déconnexion réussie, session supprimée");
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      console.error("❌ [LOGOUT] Erreur lors de la déconnexion:", error);
       // Même en cas d'erreur, on déconnecte l'utilisateur localement
+      console.log("🚪 [LOGOUT] Fallback: déconnexion locale malgré l'erreur");
       setUser(null);
       setIsAuthenticated(false);
     }

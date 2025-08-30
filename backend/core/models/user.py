@@ -89,6 +89,27 @@ class UpdateUser(BaseModel):
         }
 
 
+class ChangePasswordRequest(BaseModel):
+    """Modèle pour le changement de mot de passe"""
+
+    current_password: str = Field(..., min_length=1, description="Mot de passe actuel")
+    new_password: str = Field(
+        ..., min_length=8, description="Nouveau mot de passe (min 8 caractères)"
+    )
+    confirm_password: str = Field(
+        ..., min_length=1, description="Confirmation du nouveau mot de passe"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "current_password": "ancien_mot_de_passe",
+                "new_password": "nouveau_mot_de_passe_securise",
+                "confirm_password": "nouveau_mot_de_passe_securise",
+            }
+        }
+
+
 class HealthInfoRequest(BaseModel):
     """Modèle pour la mise à jour des informations de santé"""
 

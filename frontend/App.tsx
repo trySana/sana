@@ -35,30 +35,86 @@ function App() {
   // Navigation automatique basée sur l'état d'authentification
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated && appState === "login") {
-        setAppState("home");
-        console.log("Utilisateur authentifié → Navigation vers home");
-      } else if (
-        !isAuthenticated &&
-        appState !== "splash" &&
-        appState !== "onboarding" &&
-        appState !== "login"
-      ) {
-        setAppState("login");
-        console.log("Utilisateur non authentifié → Navigation vers login");
+      if (isAuthenticated) {
+        // Si l'utilisateur est authentifié, on le ramène toujours à home
+        if (
+          appState !== "home" &&
+          appState !== "profile" &&
+          appState !== "settings" &&
+          appState !== "security" &&
+          appState !== "privacy" &&
+          appState !== "account" &&
+          appState !== "editProfile"
+        ) {
+          setAppState("home");
+          console.log("Utilisateur authentifié → Navigation vers home");
+        }
+      } else {
+        // Si l'utilisateur n'est pas authentifié, on le ramène à login
+        // Même depuis les écrans authentifiés comme settings
+        if (
+          appState !== "splash" &&
+          appState !== "onboarding" &&
+          appState !== "login" &&
+          appState !== "signup"
+        ) {
+          setAppState("login");
+          console.log("Utilisateur non authentifié → Navigation vers login");
+        }
       }
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, appState]);
+
+  // Gestion spéciale pour l'onboarding et le splash quand l'utilisateur est déjà connecté
+  useEffect(() => {
+    if (
+      !isLoading &&
+      isAuthenticated &&
+      (appState === "onboarding" || appState === "splash")
+    ) {
+      // Si l'utilisateur est authentifié et sur onboarding/splash, aller à home
+      setAppState("home");
+      console.log(
+        "Utilisateur déjà connecté sur onboarding/splash → Navigation vers home",
+      );
+    }
+  }, [isLoading, isAuthenticated, appState]);
+
+  // Logs de débogage pour la navigation
+  useEffect(() => {
+    console.log(`🔍 [DEBUG] État de navigation:`, {
+      appState,
+      isAuthenticated,
+      isLoading,
+      timestamp: new Date().toISOString(),
+    });
+  }, [appState, isAuthenticated, isLoading]);
 
   // Navigation handlers
   const handleSplashComplete = () => {
-    setAppState("onboarding");
-    console.log("Splash terminé → Navigation vers onboarding");
+    // Si l'utilisateur est déjà authentifié, aller directement à home
+    if (isAuthenticated) {
+      setAppState("home");
+      console.log(
+        "Splash terminé → Utilisateur déjà connecté → Navigation vers home",
+      );
+    } else {
+      setAppState("onboarding");
+      console.log("Splash terminé → Navigation vers onboarding");
+    }
   };
 
   const handleOnboardingComplete = () => {
-    setAppState("login");
-    console.log("Onboarding terminé → Navigation vers login");
+    // Si l'utilisateur est déjà authentifié, aller directement à home
+    if (isAuthenticated) {
+      setAppState("home");
+      console.log(
+        "Onboarding terminé → Utilisateur déjà connecté → Navigation vers home",
+      );
+    } else {
+      setAppState("login");
+      console.log("Onboarding terminé → Navigation vers login");
+    }
   };
 
   const handleLoginSuccess = () => {

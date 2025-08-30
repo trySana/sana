@@ -11,6 +11,7 @@ from core.config import logger
 from core.config import settings
 from core.models.MedicalHistory import MedicalHistory
 from core.models.user import Authentification
+from core.models.user import ChangePasswordRequest
 from core.models.user import CreateUser
 from core.models.user import HealthInfoRequest
 from core.models.user import HealthInfoResponse
@@ -362,6 +363,68 @@ async def get_health_info_v2(username: str) -> HealthInfoResponse:
             success=False, message=f"Erreur lors de la récupération: {str(e)}"
         )
 
+@app.post("/change_password/{username}")
+async def change_password(username: str, password_data: ChangePasswordRequest) -> dict:
+    """Changer le mot de passe d'un utilisateur"""
+    try:
+        logger.info(f"Changing password for user: {username}")
+
+        # Connect to database
+        database_connection()
+
+        # Find user
+        user = User.objects(username=username).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+
+        # Validate password data
+        if password_data.new_password != password_data.confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password and confirmation password do not match",
+            )
+
+        # Verify current password
+        if (
+            user.password
+            != hashlib.blake2b(
+                password_data.current_password.encode("utf-8"),
+                digest_size=15,
+                salt=settings.SALT.encode("utf-8"),
+            ).hexdigest()
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Current password is incorrect",
+            )
+
+        # Hash new password
+        new_hasher = hashlib.blake2b(
+            password_data.new_password.encode("utf-8"),
+            digest_size=15,
+            salt=settings.SALT.encode("utf-8"),
+        ).hexdigest()
+
+        # Update password
+        User.objects(id=user.id).update_one(password=new_hasher)
+        logger.info(f"Password changed successfully for user: {username}")
+
+        # Close database connection
+        disconnect_all()
+
+        return {"success": True, "message": "Password changed successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error changing password: {str(e)}")
+        disconnect_all()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to change password: {str(e)}",
+        )
 
 @asynccontextmanager
 async def temp_file_from_upload(upload_file: UploadFile):

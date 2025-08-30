@@ -188,23 +188,26 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   const handleSignOut = () => {
-    Alert.alert("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?", [
-      {
-        text: "Annuler",
-        style: "cancel",
-      },
-      {
-        text: "Déconnexion",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await logout();
-          } catch (error) {
-            console.error("Erreur lors de la déconnexion:", error);
-          }
-        },
-      },
-    ]);
+    console.log("🔴 [LOGOUT] Bouton Sign Out cliqué !");
+
+    // Logout direct sans alerte de confirmation pour éviter les problèmes
+    const performLogout = async () => {
+      try {
+        console.log("🔴 [LOGOUT] Début de la déconnexion...");
+        await logout();
+        console.log("🔴 [LOGOUT] Déconnexion réussie !");
+      } catch (error) {
+        console.error("❌ [LOGOUT] Erreur lors de la déconnexion:", error);
+        // En cas d'erreur, on force quand même la déconnexion locale
+        Alert.alert(
+          "Erreur",
+          "Erreur lors de la déconnexion, mais vous avez été déconnecté localement.",
+        );
+      }
+    };
+
+    // Exécuter le logout immédiatement
+    performLogout();
   };
 
   return (
@@ -354,50 +357,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </SettingSection>
         </FadeInView>
 
-        {/* Test Navigation Section */}
-        <FadeInView delay={650}>
-          <SettingSection title="Test Navigation">
-            <SettingItem
-              icon="bug-outline"
-              label="Test Security"
-              onPress={() => {
-                console.log("Test direct Security");
-                if (onNavigateToSecurity) {
-                  onNavigateToSecurity();
-                } else {
-                  console.log("onNavigateToSecurity UNDEFINED");
-                }
-              }}
-            />
-            <SettingItem
-              icon="bug-outline"
-              label="Test Privacy"
-              onPress={() => {
-                console.log("Test direct Privacy");
-                if (onNavigateToPrivacy) {
-                  onNavigateToPrivacy();
-                } else {
-                  console.log("onNavigateToPrivacy UNDEFINED");
-                }
-              }}
-            />
-            <SettingItem
-              icon="bug-outline"
-              label="Test Account"
-              onPress={() => {
-                console.log("Test direct Account");
-                if (onNavigateToAccount) {
-                  onNavigateToAccount();
-                } else {
-                  console.log("onNavigateToAccount UNDEFINED");
-                }
-              }}
-            />
-          </SettingSection>
-        </FadeInView>
-
         {/* Sign Out Section */}
-        <FadeInView delay={700}>
+        <FadeInView delay={650}>
           <SettingSection title="">
             <SettingItem
               icon="log-out-outline"
