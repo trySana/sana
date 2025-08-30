@@ -112,10 +112,7 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
   const handleSaveProfile = async () => {
     const result = validateProfileForm(formData);
     if (!result.isValid) {
-      Alert.alert(
-        "Erreur de validation",
-        "Veuillez corriger les erreurs dans le formulaire",
-      );
+      Alert.alert("Erreur de validation", "Veuillez corriger les erreurs dans le formulaire");
       return;
     }
 
@@ -125,10 +122,7 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
       Alert.alert("Succès", "Profil mis à jour avec succès !");
       onSave();
     } catch (error: any) {
-      Alert.alert(
-        "Erreur",
-        error.userMessage || "Impossible de mettre à jour le profil",
-      );
+      Alert.alert("Erreur", error.userMessage || "Impossible de mettre à jour le profil");
     } finally {
       setIsLoading(false);
     }
@@ -137,10 +131,7 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
   const handleChangePassword = async () => {
     const result = validatePasswordForm(passwordData);
     if (!result.isValid) {
-      Alert.alert(
-        "Erreur de validation",
-        "Veuillez corriger les erreurs dans le formulaire",
-      );
+      Alert.alert("Erreur de validation", "Veuillez corriger les erreurs dans le formulaire");
       return;
     }
 
@@ -151,39 +142,32 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
 
     try {
       setIsLoading(true);
-
+      
       // Appel API pour changer le mot de passe
       await ApiService.changePassword(
         user?.username || "",
         passwordData.current_password,
         passwordData.new_password,
-        passwordData.confirm_password,
+        passwordData.confirm_password
       );
 
       Alert.alert("Succès", "Mot de passe changé avec succès !");
-      setPasswordData({
-        current_password: "",
-        new_password: "",
-        confirm_password: "",
-      });
+      setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
       setShowPasswordSection(false);
     } catch (error: any) {
-      Alert.alert(
-        "Erreur",
-        error.userMessage || "Impossible de changer le mot de passe",
-      );
+      Alert.alert("Erreur", error.userMessage || "Impossible de changer le mot de passe");
     } finally {
       setIsLoading(false);
     }
   };
 
   const updateField = (fieldName: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [fieldName]: value }));
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
     handleProfileFieldChange(fieldName, value);
   };
 
   const updatePasswordField = (fieldName: string, value: string) => {
-    setPasswordData((prev) => ({ ...prev, [fieldName]: value }));
+    setPasswordData(prev => ({ ...prev, [fieldName]: value }));
     handlePasswordFieldChange(fieldName, value);
   };
 
@@ -215,9 +199,7 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
           <View style={styles.profilePhotoSection}>
             <ProfileImagePicker
               currentImage={formData.profile_image}
-              onImageSelected={(imageUri) =>
-                updateField("profile_image", imageUri)
-              }
+              onImageSelected={(imageUri) => updateField("profile_image", imageUri)}
               size={120}
               showChangeButton={true}
             />
@@ -226,15 +208,13 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
           {/* Informations de base */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Informations de base</Text>
-
+            
             <ValidatedInput
               label="Nom d'utilisateur"
               value={formData.username}
               onChangeText={(text) => updateField("username", text)}
               onBlur={() => handleProfileBlur("username", formData.username)}
-              error={
-                profileTouched.username ? profileErrors.username : undefined
-              }
+              error={profileTouched.username ? profileErrors.username : undefined}
               leftIcon="person-outline"
               placeholder="Votre nom d'utilisateur"
               autoCapitalize="none"
@@ -256,14 +236,8 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
               label="Numéro de téléphone"
               value={formData.phone_number}
               onChangeText={(text) => updateField("phone_number", text)}
-              onBlur={() =>
-                handleProfileBlur("phone_number", formData.phone_number)
-              }
-              error={
-                profileTouched.phone_number
-                  ? profileErrors.phone_number
-                  : undefined
-              }
+              onBlur={() => handleProfileBlur("phone_number", formData.phone_number)}
+              error={profileTouched.phone_number ? profileErrors.phone_number : undefined}
               leftIcon="call-outline"
               placeholder="+33 6 12 34 56 78"
               keyboardType="phone-pad"
@@ -283,14 +257,8 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
               label="Date de naissance"
               value={formData.date_of_birth}
               onChangeText={(text) => updateField("date_of_birth", text)}
-              onBlur={() =>
-                handleProfileBlur("date_of_birth", formData.date_of_birth)
-              }
-              error={
-                profileTouched.date_of_birth
-                  ? profileErrors.date_of_birth
-                  : undefined
-              }
+              onBlur={() => handleProfileBlur("date_of_birth", formData.date_of_birth)}
+              error={profileTouched.date_of_birth ? profileErrors.date_of_birth : undefined}
               leftIcon="calendar-outline"
               placeholder="JJ/MM/AAAA"
             />
@@ -299,7 +267,7 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
           {/* Bio */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>À propos de vous</Text>
-
+            
             <ValidatedInput
               label="Bio"
               value={formData.bio}
@@ -339,20 +307,9 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
                 <ValidatedInput
                   label="Mot de passe actuel"
                   value={passwordData.current_password}
-                  onChangeText={(text) =>
-                    updatePasswordField("current_password", text)
-                  }
-                  onBlur={() =>
-                    handlePasswordBlur(
-                      "current_password",
-                      passwordData.current_password,
-                    )
-                  }
-                  error={
-                    passwordTouched.current_password
-                      ? passwordErrors.current_password
-                      : undefined
-                  }
+                  onChangeText={(text) => updatePasswordField("current_password", text)}
+                  onBlur={() => handlePasswordBlur("current_password", passwordData.current_password)}
+                  error={passwordTouched.current_password ? passwordErrors.current_password : undefined}
                   leftIcon="lock-closed-outline"
                   placeholder="Votre mot de passe actuel"
                   secureTextEntry
@@ -361,20 +318,9 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
                 <ValidatedInput
                   label="Nouveau mot de passe"
                   value={passwordData.new_password}
-                  onChangeText={(text) =>
-                    updatePasswordField("new_password", text)
-                  }
-                  onBlur={() =>
-                    handlePasswordBlur(
-                      "new_password",
-                      passwordData.new_password,
-                    )
-                  }
-                  error={
-                    passwordTouched.new_password
-                      ? passwordErrors.new_password
-                      : undefined
-                  }
+                  onChangeText={(text) => updatePasswordField("new_password", text)}
+                  onBlur={() => handlePasswordBlur("new_password", passwordData.new_password)}
+                  error={passwordTouched.new_password ? passwordErrors.new_password : undefined}
                   leftIcon="lock-open-outline"
                   placeholder="Nouveau mot de passe (min 8 caractères)"
                   secureTextEntry
@@ -383,20 +329,9 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
                 <ValidatedInput
                   label="Confirmer le nouveau mot de passe"
                   value={passwordData.confirm_password}
-                  onChangeText={(text) =>
-                    updatePasswordField("confirm_password", text)
-                  }
-                  onBlur={() =>
-                    handlePasswordBlur(
-                      "confirm_password",
-                      passwordData.confirm_password,
-                    )
-                  }
-                  error={
-                    passwordTouched.confirm_password
-                      ? passwordErrors.confirm_password
-                      : undefined
-                  }
+                  onChangeText={(text) => updatePasswordField("confirm_password", text)}
+                  onBlur={() => handlePasswordBlur("confirm_password", passwordData.confirm_password)}
+                  error={passwordTouched.confirm_password ? passwordErrors.confirm_password : undefined}
                   leftIcon="checkmark-circle-outline"
                   placeholder="Confirmez le nouveau mot de passe"
                   secureTextEntry
@@ -423,7 +358,7 @@ export const UserProfileEditModal: React.FC<UserProfileEditModalProps> = ({
             loading={isLoading}
             disabled={isLoading}
           />
-
+          
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={onClose}
@@ -540,4 +475,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: typography.weights.medium,
   },
-});
+}); 
