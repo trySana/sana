@@ -11,7 +11,11 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { GradientBackground, FadeInView } from "../components/common";
+import {
+  GradientBackground,
+  FadeInView,
+  UserProfileEditModal,
+} from "../components/common";
 import {
   colors,
   typography,
@@ -106,6 +110,9 @@ export const SecurityScreen: React.FC<SecurityScreenProps> = ({ onBack }) => {
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
   const [loginNotifications, setLoginNotifications] = useState(true);
 
+  // État pour la modal d'édition du profil
+  const [showProfileEditModal, setShowProfileEditModal] = useState(false);
+
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -113,11 +120,7 @@ export const SecurityScreen: React.FC<SecurityScreenProps> = ({ onBack }) => {
   };
 
   const handleChangePassword = () => {
-    Alert.alert(
-      "Changer le mot de passe",
-      "Fonctionnalité à venir : changement de mot de passe",
-      [{ text: "OK" }],
-    );
+    setShowProfileEditModal(true);
   };
 
   const handleTwoFactorAuth = () => {
@@ -250,6 +253,16 @@ export const SecurityScreen: React.FC<SecurityScreenProps> = ({ onBack }) => {
         {/* Espacement en bas */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Modal d'édition du profil pour le changement de mot de passe */}
+      <UserProfileEditModal
+        visible={showProfileEditModal}
+        onClose={() => setShowProfileEditModal(false)}
+        onSave={() => {
+          setShowProfileEditModal(false);
+          Alert.alert("Succès", "Votre profil a été mis à jour avec succès !");
+        }}
+      />
     </GradientBackground>
   );
 };

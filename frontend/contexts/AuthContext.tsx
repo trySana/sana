@@ -20,6 +20,9 @@ export interface User {
   email: string;
   sex: string;
   date_of_birth: string;
+  phone_number?: string;
+  bio?: string;
+  profile_image?: string;
 }
 
 // Types pour le contexte
@@ -214,20 +217,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Déconnexion
   const logout = async () => {
     try {
+      console.log("🚪 [LOGOUT] Début de la déconnexion...");
+
       // Supprimer la session
+      console.log("🚪 [LOGOUT] Suppression de la session...");
       await SessionManager.clearSession();
+      console.log("🚪 [LOGOUT] Session supprimée avec succès");
 
       // Supprimer le token de l'API service
+      console.log("🚪 [LOGOUT] Suppression du token API...");
       ApiService.clearAuthToken();
+      console.log("🚪 [LOGOUT] Token API supprimé");
 
       // Mettre à jour l'état local
+      console.log("🚪 [LOGOUT] Mise à jour de l'état local...");
       setUser(null);
       setIsAuthenticated(false);
+      console.log(
+        "🚪 [LOGOUT] État local mis à jour: user=null, isAuthenticated=false",
+      );
 
-      console.log("Déconnexion réussie, session supprimée");
+      console.log("🚪 [LOGOUT] Déconnexion réussie, session supprimée");
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      console.error("❌ [LOGOUT] Erreur lors de la déconnexion:", error);
       // Même en cas d'erreur, on déconnecte l'utilisateur localement
+      console.log("🚪 [LOGOUT] Fallback: déconnexion locale malgré l'erreur");
       setUser(null);
       setIsAuthenticated(false);
     }
