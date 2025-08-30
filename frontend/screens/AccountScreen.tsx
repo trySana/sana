@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { GradientBackground, FadeInView } from "../components/common";
+import { GradientBackground, FadeInView, Button } from "../components/common";
 import {
   colors,
   typography,
@@ -71,7 +73,21 @@ const AccountItem: React.FC<AccountItemProps> = ({
 );
 
 export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack }) => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
+
+  // État pour la modal d'édition
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingField, setEditingField] = useState<{
+    type: string;
+    label: string;
+    currentValue: string;
+    placeholder: string;
+    keyboardType?: "default" | "email-address" | "phone-pad";
+    multiline?: boolean;
+    maxLength?: number;
+  } | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleBack = () => {
     if (onBack) {
@@ -79,36 +95,98 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack }) => {
     }
   };
 
+  const openEditModal = (field: {
+    type: string;
+    label: string;
+    currentValue: string;
+    placeholder: string;
+    keyboardType?: "default" | "email-address" | "phone-pad";
+    multiline?: boolean;
+    maxLength?: number;
+  }) => {
+    setEditingField(field);
+    setEditValue(field.currentValue);
+    setEditModalVisible(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalVisible(false);
+    setEditingField(null);
+    setEditValue("");
+    setIsLoading(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingField || !editValue.trim()) return;
+
+    try {
+      setIsLoading(true);
+
+      // Préparer les données de mise à jour
+      const updateData: any = {};
+      const fieldName =
+        editingField.type === "phone" ? "phone_number" : editingField.type;
+      updateData[fieldName] = editValue.trim();
+
+      // Mettre à jour le profil via l'API
+      await updateProfile(updateData);
+
+      Alert.alert(
+        "Modification réussie",
+        `${editingField.label} a été modifié avec succès !`,
+        [{ text: "OK", onPress: closeEditModal }],
+      );
+    } catch (error: any) {
+      Alert.alert(
+        "Erreur",
+        error.userMessage || "Impossible de modifier cette information",
+        [{ text: "OK" }],
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleEditUsername = () => {
-    Alert.alert(
-      "Modifier le nom d'utilisateur",
-      "Fonctionnalité à venir : modification du nom d'utilisateur",
-      [{ text: "OK" }],
-    );
+    openEditModal({
+      type: "username",
+      label: "Nom d'utilisateur",
+      currentValue: user?.username || "",
+      placeholder: "Votre nom d'utilisateur",
+      maxLength: 20,
+    });
   };
 
   const handleEditEmail = () => {
-    Alert.alert(
-      "Modifier l'email",
-      "Fonctionnalité à venir : modification de l'email",
-      [{ text: "OK" }],
-    );
+    openEditModal({
+      type: "email",
+      label: "Adresse email",
+      currentValue: user?.email || "",
+      placeholder: "votre@email.com",
+      keyboardType: "email-address",
+    });
   };
 
   const handleEditPhone = () => {
-    Alert.alert(
-      "Modifier le téléphone",
-      "Fonctionnalité à venir : modification du numéro de téléphone",
-      [{ text: "OK" }],
-    );
+    openEditModal({
+      type: "phone",
+      label: "Numéro de téléphone",
+      currentValue: "Non renseigné",
+      placeholder: "+33 6 12 34 56 78",
+      keyboardType: "phone-pad",
+      maxLength: 15,
+    });
   };
 
   const handleEditBio = () => {
-    Alert.alert(
-      "Modifier la bio",
-      "Fonctionnalité à venir : modification de la bio",
-      [{ text: "OK" }],
-    );
+    openEditModal({
+      type: "bio",
+      label: "Bio",
+      currentValue: "Aucune bio renseignée",
+      placeholder: "Parlez-nous de vous...",
+      multiline: true,
+      maxLength: 500,
+    });
   };
 
   const handleAccountDeletion = () => {
@@ -267,6 +345,103 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack }) => {
                 onPress={handleAccountDeletion}
                 showChevron={false}
               />
+
+              <View style={styles.separator} />
+
+              {/* Bouton de débogage temporaire */}
+              <TouchableOpacity
+                style={styles.debugButton}
+                onPress={async () => {
+                  try {
+                    const { SessionManager } = await import(
+                      "../services/sessionManager"
+                    );
+                    const isPersistent =
+                      await SessionManager.checkSessionPersistence();
+                    const session = await SessionManager.getSession();
+
+                    Alert.alert(
+                      "Débogage Session",
+                      `Persistance: ${isPersistent ? "OK" : "ÉCHEC"}\n` +
+                        `Session: ${session ? "Trouvée" : "Non trouvée"}\n` +
+                        `User: ${session?.user?.username || "N/A"}\n` +
+                        `Token: ${session?.token ? "Présent" : "Absent"}`,
+                    );
+                  } catch (error) {
+                    Alert.alert("Erreur", `Erreur de débogage: ${error}`);
+                  }
+                }}
+              >
+                <View style={styles.debugButtonContent}>
+                  <Ionicons
+                    name="bug-outline"
+                    size={20}
+                    color={colors.warning}
+                  />
+                  <Text style={styles.debugButtonText}>Déboguer Session</Text>
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.separator} />
+
+              {/* Bouton de test de session */}
+              <TouchableOpacity
+                style={styles.testButton}
+                onPress={async () => {
+                  try {
+                    const { testSessionPersistence, testSessionPerformance } =
+                      await import("../utils/sessionTest");
+
+                    Alert.alert(
+                      "Tests de Session",
+                      "Choisissez un test à exécuter:",
+                      [
+                        {
+                          text: "Test Persistance",
+                          onPress: async () => {
+                            const result = await testSessionPersistence();
+                            Alert.alert(
+                              "Test Persistance",
+                              result
+                                ? "✅ SUCCÈS: Session persistante"
+                                : "❌ ÉCHEC: Session non persistante",
+                            );
+                          },
+                        },
+                        {
+                          text: "Test Performance",
+                          onPress: async () => {
+                            const result = await testSessionPerformance();
+                            if (result.success && result.avgTime) {
+                              Alert.alert(
+                                "Test Performance",
+                                `✅ SUCCÈS\nDurée: ${result.duration}ms\nMoyenne: ${result.avgTime.toFixed(2)}ms`,
+                              );
+                            } else {
+                              Alert.alert(
+                                "Test Performance",
+                                `❌ ÉCHEC: ${result.error || "Erreur inconnue"}`,
+                              );
+                            }
+                          },
+                        },
+                        { text: "Annuler", style: "cancel" },
+                      ],
+                    );
+                  } catch (error) {
+                    Alert.alert("Erreur", `Erreur lors du test: ${error}`);
+                  }
+                }}
+              >
+                <View style={styles.testButtonContent}>
+                  <Ionicons
+                    name="flask-outline"
+                    size={20}
+                    color={colors.info}
+                  />
+                  <Text style={styles.testButtonText}>Tests de Session</Text>
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         </FadeInView>
@@ -274,6 +449,97 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack }) => {
         {/* Espacement en bas */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Modal d'édition */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeEditModal}
+      >
+        <View style={styles.modalContainer}>
+          {/* Header de la modal */}
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={closeEditModal}
+            >
+              <Ionicons name="close" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.modalHeaderTitle}>
+              Modifier {editingField?.label}
+            </Text>
+            <View style={styles.modalHeaderSpacer} />
+          </View>
+
+          {/* Contenu de la modal */}
+          <View style={styles.modalContent}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>{editingField?.label}</Text>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  editingField?.multiline && styles.multilineInput,
+                ]}
+                value={editValue}
+                onChangeText={setEditValue}
+                placeholder={editingField?.placeholder}
+                keyboardType={editingField?.keyboardType || "default"}
+                multiline={editingField?.multiline}
+                numberOfLines={editingField?.multiline ? 3 : 1}
+                maxLength={editingField?.maxLength}
+                autoCapitalize={
+                  editingField?.type === "email" ||
+                  editingField?.type === "username"
+                    ? "none"
+                    : "sentences"
+                }
+                autoFocus={true}
+              />
+            </View>
+
+            {/* Informations d'aide */}
+            <View style={styles.helpSection}>
+              <View style={styles.helpItem}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={20}
+                  color={colors.info}
+                />
+                <Text style={styles.helpText}>
+                  {editingField?.type === "username" &&
+                    "Le nom d'utilisateur doit être unique et contenir entre 3 et 20 caractères."}
+                  {editingField?.type === "email" &&
+                    "L'email sera utilisé pour la récupération de compte et les notifications."}
+                  {editingField?.type === "phone" &&
+                    "Le numéro de téléphone est optionnel et peut être utilisé pour la vérification."}
+                  {editingField?.type === "bio" &&
+                    "La bio permet de vous présenter aux autres utilisateurs (optionnel)."}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Boutons d'action */}
+          <View style={styles.modalActions}>
+            <Button
+              title="Sauvegarder"
+              onPress={handleSaveEdit}
+              style={styles.saveButton}
+              loading={isLoading}
+              disabled={isLoading}
+            />
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={closeEditModal}
+              disabled={isLoading}
+            >
+              <Text style={styles.cancelButtonText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </GradientBackground>
   );
 };
@@ -385,5 +651,157 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     marginHorizontal: spacing.lg,
+  },
+
+  // Styles pour la modal
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingTop: Platform.OS === "ios" ? 50 : spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.separator,
+    backgroundColor: colors.white,
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.cardBackground,
+  },
+  modalHeaderTitle: {
+    flex: 1,
+    fontSize: typography.title3,
+    fontWeight: typography.weights.semiBold,
+    color: colors.textPrimary,
+    textAlign: "center",
+    marginHorizontal: spacing.md,
+  },
+  modalHeaderSpacer: {
+    width: 40,
+  },
+  modalContent: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
+  },
+  inputContainer: {
+    marginBottom: spacing.xl,
+  },
+  inputLabel: {
+    fontSize: typography.body,
+    fontWeight: typography.weights.medium,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: colors.separator,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    fontSize: typography.body,
+    color: colors.textPrimary,
+    backgroundColor: colors.white,
+    minHeight: 48,
+  },
+  multilineInput: {
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  helpSection: {
+    marginBottom: spacing.xl,
+  },
+  helpItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: colors.cardBackground,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.info,
+  },
+  helpText: {
+    flex: 1,
+    fontSize: typography.footnote,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginLeft: spacing.sm,
+  },
+  modalActions: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.separator,
+    backgroundColor: colors.white,
+    gap: spacing.md,
+  },
+  saveButton: {
+    backgroundColor: colors.primary,
+  },
+  cancelButton: {
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.separator,
+  },
+  cancelButtonText: {
+    fontSize: typography.body,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
+  },
+
+  // Styles pour le bouton de débogage
+  debugButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.cardBackground,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.warning,
+  },
+  debugButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  debugButtonText: {
+    fontSize: typography.body,
+    color: colors.warning,
+    fontWeight: typography.weights.medium,
+  },
+
+  // Styles pour le bouton de test de session
+  testButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.cardBackground,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.info,
+  },
+  testButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  testButtonText: {
+    fontSize: typography.body,
+    color: colors.info,
+    fontWeight: typography.weights.medium,
   },
 });

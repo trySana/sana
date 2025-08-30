@@ -12,6 +12,7 @@ import {
   UpdateProfileRequest,
 } from "../services/api";
 import { SessionManager, SessionData } from "../services/sessionManager";
+import { AppState } from "react-native";
 
 // Types pour l'utilisateur
 export interface User {
@@ -70,6 +71,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Vérifier le statut d'authentification au démarrage
   useEffect(() => {
     checkAuthStatus();
+
+    // Ajouter un listener pour les changements d'état de l'app
+    const handleAppStateChange = () => {
+      // Vérifier la session quand l'app revient au premier plan
+      checkAuthStatus();
+    };
+
+    // Écouter les changements d'état de l'application
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange,
+    );
+
+    return () => {
+      subscription?.remove();
+    };
   }, []);
 
   // Vérifier le statut d'authentification
@@ -103,8 +120,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         "Erreur lors de la vérification du statut d'authentification:",
         error,
       );
-      setIsAuthenticated(false);
-      setUser(null);
+      // En cas d'erreur, on ne déconnecte pas automatiquement
+      // On garde l'état actuel et on essaie de récupérer la session
+      try {
+        const fallbackSession = await SessionManager.getSession();
+        if (fallbackSession) {
+          ApiService.setAuthToken(fallbackSession.token);
+          setUser(fallbackSession.user);
+          setIsAuthenticated(true);
+          console.log("Session récupérée en fallback");
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      } catch (fallbackError) {
+        console.error("Erreur fallback:", fallbackError);
+        setIsAuthenticated(false);
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
