@@ -297,4 +297,57 @@ export class ApiService {
       );
     }
   }
+
+  // Changer le mot de passe
+  static async changePassword(
+    username: string,
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log(`[API] Changement de mot de passe pour ${username}`);
+
+      if (newPassword !== confirmPassword) {
+        throw new ApiError(
+          "Les nouveaux mots de passe ne correspondent pas",
+          API_ERROR_TYPES.VALIDATION_ERROR,
+        );
+      }
+
+      const response = await this.makeRequest<{
+        success: boolean;
+        message: string;
+      }>(`http://localhost:8000/change_password/${username}`, {
+        method: "POST",
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+          confirm_password: confirmPassword,
+        }),
+      });
+
+      console.log(`[API] Réponse changement mot de passe:`, response);
+
+      if (!response.success) {
+        throw new ApiError(
+          response.message || "Échec du changement de mot de passe",
+          API_ERROR_TYPES.AUTHENTICATION_ERROR,
+        );
+      }
+
+      return response;
+    } catch (error) {
+      console.error("Erreur lors du changement de mot de passe:", error);
+
+      if (error instanceof ApiError) {
+        throw error;
+      }
+
+      throw new ApiError(
+        "Erreur lors du changement de mot de passe",
+        API_ERROR_TYPES.AUTHENTICATION_ERROR,
+      );
+    }
+  }
 }

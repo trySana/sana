@@ -6,3 +6,4 @@ export { BottomSheet } from "./BottomSheet";
 export { LoadingScreen } from "./LoadingScreen";
 export { ValidatedInput } from "./ValidatedInput";
 export { ProfileImagePicker } from "./ImagePicker";
+export { UserProfileEditModal } from "./UserProfileEditModal";

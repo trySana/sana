@@ -51,6 +51,7 @@ function App() {
         }
       } else {
         // Si l'utilisateur n'est pas authentifié, on le ramène à login
+        // Même depuis les écrans authentifiés comme settings
         if (
           appState !== "splash" &&
           appState !== "onboarding" &&

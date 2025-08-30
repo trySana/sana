@@ -15,6 +15,9 @@ export interface SessionData {
     email: string;
     sex: string;
     date_of_birth: string;
+    phone_number?: string;
+    bio?: string;
+    profile_image?: string;
   };
   rememberMe: boolean;
   expiresAt: number;
@@ -170,14 +173,24 @@ export class SessionManager {
   // Supprimer la session
   static async clearSession(): Promise<void> {
     try {
-      await AsyncStorage.multiRemove([
+      console.log("🗑️ [SESSION] Début de la suppression de session...");
+
+      const itemsToRemove = [
         SESSION_KEYS.USER_TOKEN,
         SESSION_KEYS.USER_DATA,
         SESSION_KEYS.REMEMBER_ME,
         "session_expires_at",
-      ]);
+      ];
+
+      console.log("🗑️ [SESSION] Suppression des clés:", itemsToRemove);
+      await AsyncStorage.multiRemove(itemsToRemove);
+
+      console.log("🗑️ [SESSION] Session supprimée avec succès");
     } catch (error) {
-      console.error("Erreur lors de la suppression de la session:", error);
+      console.error(
+        "❌ [SESSION] Erreur lors de la suppression de la session:",
+        error,
+      );
     }
   }
 
