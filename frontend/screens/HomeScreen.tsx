@@ -7,12 +7,14 @@ import {
   Platform,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   GradientBackground,
   FadeInView,
   BottomSheet,
+  VoiceButton,
 } from "../components/common";
 import { DashboardContent } from "../components/dashboard";
 import {
@@ -40,10 +42,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const { user } = useAuth();
 
-  const handleVoicePress = () => {
-    if (onVoicePress) {
-      onVoicePress();
+  const handleRecordingStart = () => {
+    console.log("🎤 Enregistrement démarré");
+  };
+
+  const handleRecordingStop = () => {
+    console.log("🛑 Enregistrement arrêté");
+  };
+
+  const handleProcessing = () => {
+    console.log("🤖 Traitement IA en cours...");
+  };
+
+  const handleResponse = (success: boolean) => {
+    if (success) {
+      console.log("✅ Réponse reçue avec succès");
+    } else {
+      console.log("❌ Erreur lors de la réponse");
     }
+  };
+
+  const handleError = (error: string) => {
+    console.error("❌ Erreur:", error);
+    Alert.alert("Erreur", error);
   };
 
   return (
@@ -81,13 +102,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Zone centrale avec bouton micro */}
       <View style={styles.centralZone}>
         <FadeInView delay={200} style={styles.voiceButtonContainer}>
-          <TouchableOpacity
-            style={styles.voiceButton}
-            onPress={handleVoicePress}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="mic" size={24} color="#6B7AED" />
-          </TouchableOpacity>
+          <VoiceButton
+            size="large"
+            onRecordingStart={handleRecordingStart}
+            onRecordingStop={handleRecordingStop}
+            onProcessing={handleProcessing}
+            onResponse={handleResponse}
+            onError={handleError}
+          />
         </FadeInView>
       </View>
 

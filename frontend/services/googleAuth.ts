@@ -1,6 +1,9 @@
 import {
   GoogleSignin,
   statusCodes,
+  type User,
+  type SignInResponse,
+  type SignInSuccessResponse,
 } from "@react-native-google-signin/google-signin";
 import { Platform } from "react-native";
 import { GOOGLE_CONFIG } from "../config/google";
@@ -46,26 +49,29 @@ class GoogleAuthService {
     try {
       console.log("[GoogleAuth] Tentative de connexion...");
 
-      // Vérifier si Google Play Services est disponible (Android)
       if (Platform.OS === "android") {
         await GoogleSignin.hasPlayServices();
       }
 
-      // Se connecter avec Google
-      const userInfo = await GoogleSignin.signIn();
+      const userInfo: SignInResponse = await GoogleSignin.signIn();
       console.log("[GoogleAuth] Connexion réussie:", userInfo);
 
-      // Récupérer le token d'accès
+      if (userInfo.type !== "success") {
+        return {
+          success: false,
+          error: "Connexion annulée par l'utilisateur",
+        };
+      }
+
       const tokens = await GoogleSignin.getTokens();
 
-      // Extraire les informations utilisateur
       const user: GoogleUser = {
-        id: userInfo.idToken || "",
-        email: userInfo.user?.email || "",
-        name: userInfo.user?.name || "",
-        givenName: userInfo.user?.givenName || undefined,
-        familyName: userInfo.user?.familyName || undefined,
-        photo: userInfo.user?.photo || undefined,
+        id: userInfo.data.idToken || "",
+        email: userInfo.data.user.email || "",
+        name: userInfo.data.user.name || "",
+        givenName: userInfo.data.user.givenName || undefined,
+        familyName: userInfo.data.user.familyName || undefined,
+        photo: userInfo.data.user.photo || undefined,
       };
 
       return {
@@ -117,7 +123,7 @@ class GoogleAuthService {
    */
   async isSignedIn(): Promise<boolean> {
     try {
-      const isSignedIn = await GoogleSignin.isSignedIn();
+      const isSignedIn = GoogleSignin.hasPreviousSignIn();
       console.log("[GoogleAuth] Utilisateur connecté:", isSignedIn);
       return isSignedIn;
     } catch (error) {
@@ -134,15 +140,15 @@ class GoogleAuthService {
    */
   async getCurrentUser(): Promise<GoogleUser | null> {
     try {
-      const currentUser = await GoogleSignin.getCurrentUser();
+      const currentUser: User | null = GoogleSignin.getCurrentUser();
       if (currentUser) {
         return {
           id: currentUser.idToken || "",
-          email: currentUser.user?.email || "",
-          name: currentUser.user?.name || "",
-          givenName: currentUser.user?.givenName || undefined,
-          familyName: currentUser.user?.familyName || undefined,
-          photo: currentUser.user?.photo || undefined,
+          email: currentUser.user.email || "",
+          name: currentUser.user.name || "",
+          givenName: currentUser.user.givenName || undefined,
+          familyName: currentUser.user.familyName || undefined,
+          photo: currentUser.user.photo || undefined,
         };
       }
       return null;
