@@ -1,5 +1,10 @@
 import hashlib
+import io
+import os
+import tempfile
+from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 
 import openai
 from core.config import logger
@@ -12,8 +17,9 @@ from core.models.user import HealthInfoRequest
 from core.models.user import HealthInfoResponse
 from core.models.user import UpdateUser
 from core.models.user import User
+from core.utils.chatgpt import chat
 from core.utils.connection import database_connection
-from core.utils.llm_parser import parse_medical_text
+from core.utils.eleven_labs import text_to_speech
 from core.utils.whisper_stt import WhisperSTT
 from fastapi import FastAPI
 from fastapi import File
@@ -21,11 +27,22 @@ from fastapi import HTTPException
 from fastapi import status
 from fastapi import UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from mongoengine.connection import disconnect_all
 
 
-# whisper_stt = WhisperSTT()  # Temporairement désactivé pour les tests
+SUPPORTED_FORMATS = {
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/wave",
+    "audio/ogg",
+    "audio/flac",
+    "audio/aac",
+    "audio/m4a",
+}
 
+whisper_stt = WhisperSTT()
 
 client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -346,7 +363,6 @@ async def get_health_info_v2(username: str) -> HealthInfoResponse:
             success=False, message=f"Erreur lors de la récupération: {str(e)}"
         )
 
-
 @app.post("/change_password/{username}")
 async def change_password(username: str, password_data: ChangePasswordRequest) -> dict:
     """Changer le mot de passe d'un utilisateur"""
@@ -409,3 +425,66 @@ async def change_password(username: str, password_data: ChangePasswordRequest) -
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to change password: {str(e)}",
         )
+
+@asynccontextmanager
+async def temp_file_from_upload(upload_file: UploadFile):
+    """Context manager for temporary file creation and cleanup"""
+
+    file_extension = Path(upload_file.filename).suffix
+    temp_file_path = None
+
+    try:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file_extension
+        ) as temp_file:
+            await upload_file.seek(0)
+            content = await upload_file.read()
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+
+        yield temp_file_path
+
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except FileNotFoundError:
+                pass
+
+
+@app.post("/conversation/")
+async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
+    """Take an audio file, transcribe it to text, send it in a chatgpt session,
+    then return the reply in audio format.
+
+    Args:
+        file (UploadFile, optional): Patient's audio message. Defaults to File(...).
+
+    Returns:
+        StreamingResponse: Audio stream of the ChatGPT response.
+    """
+
+    if not file.content_type or not file.content_type.startswith("audio/"):
+        raise HTTPException(status_code=400, detail="Invalid audio file format")
+
+    try:
+        async with temp_file_from_upload(file) as temp_path:
+            transcription = await whisper_stt.transcribe_audio(temp_path)
+            reply = chat(
+                client=client,
+                session_id=file.filename,
+                user_message=transcription,
+            )
+            audio_reply = await text_to_speech(text=reply)
+
+            return StreamingResponse(
+                io.BytesIO(audio_reply),
+                media_type="audio/mpeg",
+                headers={
+                    "Content-Disposition": f"attachment; filename={file.filename}.mp3"
+                },
+            )
+
+    except Exception as e:
+        logger.error(f"Transcription error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
