@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: sana-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: sana_test
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - sana-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sana-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_HOST=mongodb:27017
+      - MONGO_DB=sana_test
+      - MONGO_USER=
+      - MONGO_PWD=
+      - SALT=${SALT:-test_salt}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - TTS_URL=${TTS_URL:-https://api.elevenlabs.io/v1/text-to-speech/B4wUDSZmHFnxqY60nxXm}
+    depends_on:
+      - mongodb
+    networks:
+      - sana-network
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  mongodb_data:
+
+networks:
+  sana-network:
+    driver: bridge

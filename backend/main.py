@@ -40,6 +40,11 @@ SUPPORTED_FORMATS = {
     "audio/flac",
     "audio/aac",
     "audio/m4a",
+    "audio/x-m4a",
+    "audio/3gpp",
+    "audio/3gpp2",
+    "audio/webm",
+    "audio/opus",
 }
 
 whisper_stt = WhisperSTT()
@@ -363,6 +368,7 @@ async def get_health_info_v2(username: str) -> HealthInfoResponse:
             success=False, message=f"Erreur lors de la récupération: {str(e)}"
         )
 
+
 @app.post("/change_password/{username}")
 async def change_password(username: str, password_data: ChangePasswordRequest) -> dict:
     """Changer le mot de passe d'un utilisateur"""
@@ -426,6 +432,7 @@ async def change_password(username: str, password_data: ChangePasswordRequest) -
             detail=f"Failed to change password: {str(e)}",
         )
 
+
 @asynccontextmanager
 async def temp_file_from_upload(upload_file: UploadFile):
     """Context manager for temporary file creation and cleanup"""
@@ -434,22 +441,49 @@ async def temp_file_from_upload(upload_file: UploadFile):
     temp_file_path = None
 
     try:
+        # Créer un fichier temporaire avec l'extension appropriée
         with tempfile.NamedTemporaryFile(
-            delete=False, suffix=file_extension
+            delete=False, suffix=file_extension, mode="wb"
         ) as temp_file:
+            # Remettre le curseur au début du fichier uploadé
             await upload_file.seek(0)
+            # Lire le contenu
             content = await upload_file.read()
+            # Écrire le contenu dans le fichier temporaire
             temp_file.write(content)
+            # Forcer l'écriture sur le disque
+            temp_file.flush()
+            # Récupérer le chemin du fichier temporaire
             temp_file_path = temp_file.name
+
+        # Le fichier est maintenant fermé mais existe sur le disque
+        # Vérifier que le fichier existe et a une taille > 0
+        if not os.path.exists(temp_file_path) or os.path.getsize(temp_file_path) == 0:
+            raise ValueError("Le fichier temporaire n'a pas été créé correctement")
+
+        logger.info(
+            f"Fichier temporaire créé: {temp_file_path} "
+            f"(taille: {os.path.getsize(temp_file_path)} bytes)"
+        )
 
         yield temp_file_path
 
+    except Exception as e:
+        logger.error(f"Erreur lors de la création du fichier temporaire: {str(e)}")
+        raise
     finally:
+        # Nettoyer le fichier temporaire
         if temp_file_path and os.path.exists(temp_file_path):
             try:
                 os.unlink(temp_file_path)
+                logger.info(f"Fichier temporaire supprimé: {temp_file_path}")
             except FileNotFoundError:
                 pass
+            except Exception as e:
+                logger.warning(
+                    f"Impossible de supprimer le fichier temporaire "
+                    f"{temp_file_path}: {str(e)}"
+                )
 
 
 @app.post("/conversation/")
@@ -464,18 +498,51 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
         StreamingResponse: Audio stream of the ChatGPT response.
     """
 
-    if not file.content_type or not file.content_type.startswith("audio/"):
-        raise HTTPException(status_code=400, detail="Invalid audio file format")
+    # Validation du fichier
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Nom de fichier manquant")
+
+    if not file.content_type:
+        raise HTTPException(status_code=400, detail="Type de contenu manquant")
+
+    if not file.content_type.startswith("audio/"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Format de fichier non supporté: {file.content_type}. "
+            f"Formats supportés: {', '.join(SUPPORTED_FORMATS)}",
+        )
+
+    # Vérifier la taille du fichier (max 50MB)
+    if file.size and file.size > 50 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400, detail="Fichier trop volumineux (max 50MB)"
+        )
+
+    logger.info(
+        f"Conversation request received - File: {file.filename}, "
+        f"Type: {file.content_type}, Size: {file.size}"
+    )
 
     try:
         async with temp_file_from_upload(file) as temp_path:
+            logger.info(f"Starting transcription of file: {temp_path}")
+
+            # Vérifier que le fichier existe toujours avant la transcription
+            if not os.path.exists(temp_path):
+                raise ValueError(f"Le fichier temporaire {temp_path} n'existe plus")
+
             transcription = await whisper_stt.transcribe_audio(temp_path)
+            logger.info(f"Transcription completed: {transcription}")
+
             reply = chat(
                 client=client,
                 session_id=file.filename,
                 user_message=transcription,
             )
+            logger.info(f"ChatGPT reply: {reply}")
+
             audio_reply = await text_to_speech(text=reply)
+            logger.info(f"Audio reply generated, size: {len(audio_reply)} bytes")
 
             return StreamingResponse(
                 io.BytesIO(audio_reply),
@@ -487,4 +554,8 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
 
     except Exception as e:
         logger.error(f"Transcription error: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")

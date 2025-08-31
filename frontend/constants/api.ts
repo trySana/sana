@@ -9,6 +9,11 @@ export const API_CONFIG = {
     AUTHENTICATE: "/authentificate/",
   },
 
+  // Endpoints de conversation
+  CONVERSATION: {
+    CONVERSATION: "/conversation/",
+  },
+
   // Endpoints futurs
   FUTURE: {
     STT: "/stt/",
@@ -18,8 +23,9 @@ export const API_CONFIG = {
 
   // Timeouts
   TIMEOUTS: {
-    REQUEST: 10000, // 10 secondes
-    AUTH: 30000, // 30 secondes pour l'authentification
+    REQUEST: 10000,
+    AUTH: 30000,
+    CONVERSATION: 60000,
   },
 
   // Headers par défaut
@@ -33,6 +39,7 @@ export const API_CONFIG = {
 export const API_URLS = {
   CREATE_USER: `${API_CONFIG.BASE_URL}${API_CONFIG.AUTH.CREATE_USER}`,
   AUTHENTICATE: `${API_CONFIG.BASE_URL}${API_CONFIG.AUTH.AUTHENTICATE}`,
+  CONVERSATION: `${API_CONFIG.BASE_URL}${API_CONFIG.CONVERSATION.CONVERSATION}`,
 };
 
 // Types d'erreurs API
@@ -44,6 +51,8 @@ export const API_ERROR_TYPES = {
   UNKNOWN_ERROR: "UNKNOWN_ERROR",
   HEALTH_DATA_ERROR: "HEALTH_DATA_ERROR",
   USER_NOT_FOUND: "USER_NOT_FOUND",
+  AUDIO_ERROR: "AUDIO_ERROR",
+  CONVERSATION_ERROR: "CONVERSATION_ERROR",
 };
 
 // Messages d'erreur utilisateur
@@ -60,4 +69,8 @@ export const USER_FRIENDLY_MESSAGES = {
     "Erreur lors de la gestion des informations de santé.",
   [API_ERROR_TYPES.USER_NOT_FOUND]:
     "Utilisateur non trouvé. Vérifiez votre nom d'utilisateur.",
+  [API_ERROR_TYPES.AUDIO_ERROR]:
+    "Erreur lors de l'enregistrement ou de la lecture audio.",
+  [API_ERROR_TYPES.CONVERSATION_ERROR]:
+    "Erreur lors de la conversation avec l'assistant IA.",
 };

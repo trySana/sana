@@ -1,16 +1,16 @@
-const { getDefaultConfig } = require("expo/metro-config");
+const { getDefaultConfig } = require("@expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
 
-// Support for SVG
-config.transformer.assetPlugins = ["expo-asset/tools/hashAssetFiles"];
+// Configuration monorepo
+config.projectRoot = __dirname;
+config.watchFolders = [__dirname];
 
-// Support for react-native-reanimated
-config.transformer.getTransformOptions = async () => ({
-  transform: {
-    experimentalImportSupport: false,
-    inlineRequires: true,
-  },
-});
+// Configuration resolver
+config.resolver.platforms = ["ios", "android", "native", "web"];
+config.resolver.unstable_enableSymlinks = false;
+
+// Configuration Metro
+config.watchman = false;
 
 module.exports = config;
