@@ -47,7 +47,7 @@ class MedicalHistory(Document):
     # Dernière mise à jour
     last_updated = DateField(default=datetime.utcnow)
 
-    meta = {"collection": "medical_history", "indexes": ["user"]}
+    meta = {"collection": "MedicalHistory", "indexes": ["user"]}
 
     def to_dict(self):
         """Convertit le document en dictionnaire"""
