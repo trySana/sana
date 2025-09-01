@@ -8,6 +8,7 @@ import {
 } from "expo-audio";
 import { Platform } from "react-native";
 import { API_CONFIG } from "../constants/api";
+import { SessionManager } from "./sessionManager";
 
 // Types pour le service audio
 export interface ConversationResponse {
@@ -132,10 +133,10 @@ class AudioService {
 
         // Créer un fichier avec un nom unique
         const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(2, 8);
+        const session_data = await SessionManager.getSession()
         audioFile = new File(
           [audioBlob],
-          `audio_${timestamp}_${randomId}.webm`,
+          `${session_data.user.username}.webm`,
           {
             type: audioBlob.type || "audio/webm",
           },
@@ -153,10 +154,10 @@ class AudioService {
         const audioBlob = await response.blob();
 
         const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(2, 8);
+        const session_data = await SessionManager.getSession()
         audioFile = new File(
           [audioBlob],
-          `audio_${timestamp}_${randomId}.m4a`,
+          `${session_data.user.username}.m4a`,
           {
             type: audioBlob.type || "audio/m4a",
           },

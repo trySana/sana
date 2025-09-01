@@ -526,9 +526,8 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
         raise HTTPException(status_code=400, detail="User does not exists")
 
     medical_history = MedicalHistory.objects(user=user).first()
-
-    if not medical_history:
-        raise HTTPException(status_code=400, detail="User does not have medical history")
+    if medical_history:
+        medical_history = medical_history.to_json()
 
     disconnect_all()
 
@@ -552,7 +551,7 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
                 client=client,
                 session_id=file.filename,
                 user_message=transcription,
-                medical_history=medical_history.to_json(),
+                medical_history=medical_history,
             )
             logger.info(f"ChatGPT reply: {reply}")
 
