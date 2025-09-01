@@ -518,6 +518,20 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
             status_code=400, detail="Fichier trop volumineux (max 50MB)"
         )
 
+    # Verify that the user exists
+    database_connection()
+    user = User.objects(username=Path(file.filename).stem).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="User does not exists")
+
+    medical_history = MedicalHistory.objects(user=user).first()
+
+    if not medical_history:
+        raise HTTPException(status_code=400, detail="User does not have medical history")
+
+    disconnect_all()
+
     logger.info(
         f"Conversation request received - File: {file.filename}, "
         f"Type: {file.content_type}, Size: {file.size}"
@@ -538,6 +552,7 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
                 client=client,
                 session_id=file.filename,
                 user_message=transcription,
+                medical_history=medical_history.to_json(),
             )
             logger.info(f"ChatGPT reply: {reply}")
 
