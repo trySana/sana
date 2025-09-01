@@ -25,10 +25,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MONGO_HOST=mongodb:27017
-      - MONGO_DB=sana_test
-      - MONGO_USER=
-      - MONGO_PWD=
+      - MONGO_HOST=${MONGO_HOST}
+      - MONGO_DB=Sana
+      - MONGO_USER=${MONGO_USER}
+      - MONGO_PWD=${MONGO_PWD}
       - SALT=${SALT:-test_salt}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}

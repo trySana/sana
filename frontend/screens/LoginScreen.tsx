@@ -41,7 +41,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onForgotPassword,
 }) => {
   const { login, isLoading, error, clearError } = useAuth();
-  const [email, setEmail] = useState("thibaud.combaz@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

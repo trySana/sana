@@ -8,7 +8,7 @@ MAX_MESSAGES = 6
 sessions: Dict[str, List[Dict[str, str]]] = {}
 
 
-def chat(client: OpenAI, session_id: str, user_message: str, medical_history: Dict):
+def chat(client: OpenAI, session_id: str, user_message: str, medical_history: Dict = None):
     if session_id not in sessions:
         sessions[session_id] = []
 
@@ -26,7 +26,7 @@ def chat(client: OpenAI, session_id: str, user_message: str, medical_history: Di
         },
     ]
 
-    if len(session) == 1:
+    if len(session) == 1 and medical_history:
         system_messages.append(
             {
                 "role": "system",
