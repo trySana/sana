@@ -1,19 +1,22 @@
 from typing import Dict
+from typing import Optional
 
-from core.models.user import User
+from core.config import logger
+from core.config import settings
 from core.models.message import Message
-from core.config import logger, settings
+from core.models.user import User
 from openai import OpenAI
 
 
 class Sana:
-
-    MAX_MESSAGES = 6
+    MAX_MESSAGES = 8
 
     def __init__(self):
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-    def chat(self, user: User, user_message: str, medical_history: Dict = None):
+    def chat(
+        self, user: User, user_message: str, medical_history: Optional[Dict] = None
+    ) -> str:
 
         session = Message.get_messages_by_user(user)
         Message(user=user, message={"role": "user", "content": user_message}).save()
@@ -56,7 +59,6 @@ class Sana:
 
             reply = response.choices[0].message.content
             Message(user=user, message={"role": "assistant", "content": reply}).save()
-
             return reply
 
         except Exception as e:
