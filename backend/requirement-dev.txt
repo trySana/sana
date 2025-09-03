@@ -1,5 +1,7 @@
 -r requirements.txt
 
+mongomock
+
 black
 flake8
 mypy

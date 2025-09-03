@@ -47,11 +47,19 @@ SUPPORTED_FORMATS = {
     "audio/opus",
 }
 
-whisper_stt = WhisperSTT()
 sana = Sana()
+whisper_stt = WhisperSTT()
 
-logger.info("Starting the API...")
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting the API...")
+    database_connection()
+    yield
+    disconnect_all()
+    logger.info("Closing the API...")
+
+app = FastAPI(lifespan=lifespan)
 
 # Configuration CORS
 app.add_middleware(
@@ -94,7 +102,6 @@ async def create_user(input: CreateUser) -> dict:
         ).hexdigest()
 
         logger.info("Connecting to database...")
-        database_connection()
 
         logger.info("Creating user...")
         user = User(
@@ -107,7 +114,6 @@ async def create_user(input: CreateUser) -> dict:
         user.save()
 
         logger.info("Closing database connection...")
-        disconnect_all()
 
         return {
             "success": True,
@@ -117,7 +123,7 @@ async def create_user(input: CreateUser) -> dict:
 
     except Exception as e:
         logger.error(f"Error creating user: {str(e)}")
-        disconnect_all()
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create user: {str(e)}",
@@ -143,7 +149,6 @@ async def authentificate(input: Authentification) -> dict:
         ).hexdigest()
 
         logger.info("Connecting to database...")
-        database_connection()
 
         logger.info("Authenticating...")
         user = User.objects(  # type: ignore[attr-defined]
@@ -157,7 +162,6 @@ async def authentificate(input: Authentification) -> dict:
             )
 
         logger.info("Closing database connection...")
-        disconnect_all()
 
         return {
             "success": True,
@@ -177,11 +181,12 @@ async def authentificate(input: Authentification) -> dict:
         raise
     except Exception as e:
         logger.error(f"Error during authentication: {str(e)}")
-        disconnect_all()
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Authentication failed: {str(e)}",
         )
+
 
 @app.put("/update_profile/{username}")
 async def update_profile(username: str, update_data: UpdateUser) -> dict:
@@ -196,9 +201,6 @@ async def update_profile(username: str, update_data: UpdateUser) -> dict:
     """
     try:
         logger.info(f"Updating profile for user: {username}")
-
-        # Connect to database
-        database_connection()
 
         # Find user
         user = User.objects(username=username).first()
@@ -250,7 +252,6 @@ async def update_profile(username: str, update_data: UpdateUser) -> dict:
             logger.info(f"Profile updated successfully for user: {username}")
 
         # Close database connection
-        disconnect_all()
 
         return {
             "success": True,
@@ -262,7 +263,7 @@ async def update_profile(username: str, update_data: UpdateUser) -> dict:
         raise
     except Exception as e:
         logger.error(f"Error updating profile: {str(e)}")
-        disconnect_all()
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update profile: {str(e)}",
@@ -275,8 +276,6 @@ async def update_health_info(
 ) -> HealthInfoResponse:
     """Mettre à jour les informations de santé d'un utilisateur"""
     try:
-        # Connect to database
-        database_connection()
 
         user = User.objects(username=username).first()
         if not user:
@@ -315,10 +314,6 @@ async def update_health_info(
 async def get_health_info_v2(username: str) -> HealthInfoResponse:
     """Récupérer les informations de santé d'un utilisateur - VERSION CORRIGEE"""
     try:
-        # Connect to database
-        logger.info("DEBUG: About to call database_connection()")
-        database_connection()
-        logger.info("DEBUG: database_connection() called successfully")
 
         # Verify the user exists
         user = User.objects(username=username).first()
@@ -359,9 +354,6 @@ async def change_password(username: str, password_data: ChangePasswordRequest) -
     try:
         logger.info(f"Changing password for user: {username}")
 
-        # Connect to database
-        database_connection()
-
         # Find user
         user = User.objects(username=username).first()
         if not user:
@@ -401,16 +393,13 @@ async def change_password(username: str, password_data: ChangePasswordRequest) -
         User.objects(id=user.id).update_one(password=new_hasher)
         logger.info(f"Password changed successfully for user: {username}")
 
-        # Close database connection
-        disconnect_all()
-
         return {"success": True, "message": "Password changed successfully"}
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error changing password: {str(e)}")
-        disconnect_all()
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to change password: {str(e)}",
@@ -500,7 +489,6 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
             status_code=400, detail="File too large (max 50MB)"
         )
 
-    database_connection()
     user = User.objects(username=Path(file.filename).stem).first()
 
     if not user:
@@ -509,8 +497,6 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
     medical_history = MedicalHistory.objects(user=user).first()
     if medical_history:
         medical_history = medical_history.to_json()
-
-    disconnect_all()
 
     logger.info(
         f"Conversation request received - File: {file.filename}, "
