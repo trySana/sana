@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class WhisperSTT:
+
     def __init__(self, model_name: str = "base"):
         logger.info("Loading Whisper model...")
         self.model = whisper.load_model(model_name)
