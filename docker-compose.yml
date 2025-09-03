@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     environment:
       - MONGO_HOST=${MONGO_HOST}
-      - MONGO_DB=Sana
+      - MONGO_DB=${MONGO_DB}
       - MONGO_USER=${MONGO_USER}
       - MONGO_PWD=${MONGO_PWD}
       - SALT=${SALT:-test_salt}
