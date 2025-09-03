@@ -1,6 +1,7 @@
 from typing import Dict
-from typing import List
 
+from core.models.user import User
+from core.models.message import Message
 from core.config import logger, settings
 from openai import OpenAI
 
@@ -10,14 +11,13 @@ class Sana:
     MAX_MESSAGES = 6
 
     def __init__(self):
-        self.sessions = dict()
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-    def chat(self, session_id: str, user_message: str, medical_history: Dict = None):
-        if session_id not in self.sessions:
-            self.sessions[session_id] = []
+    def chat(self, user: User, user_message: str, medical_history: Dict = None):
 
-        session = self.sessions[session_id]
+        session = Message.get_messages_by_user(user)
+        Message(user=user, message={"role": "user", "content": user_message}).save()
+
         session.append({"role": "user", "content": user_message})
 
         system_messages = [
@@ -55,10 +55,7 @@ class Sana:
             )
 
             reply = response.choices[0].message.content
-            session.append({"role": "assistant", "content": reply})
-
-            if len(session) >= 2 * Sana.MAX_MESSAGES:
-                del self.sessions[session_id]
+            Message(user=user, message={"role": "assistant", "content": reply}).save()
 
             return reply
 

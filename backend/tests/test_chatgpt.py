@@ -1,14 +1,19 @@
 import pytest
+from mongoengine.connection import disconnect_all
+
 from core.utils.chatgpt import Sana
+from core.utils.connection import mock_database_connection
+
+
+class DummyUser:
+    username = "testuser"
 
 
 class DummyResponse:
-
     class Choices:
         class Message:
             content = "Doctor's reply"
         message = Message()
-
     choices = [Choices()]
 
 
@@ -32,20 +37,73 @@ def sana(monkeypatch):
     return sana_instance
 
 
-def test_chat_basic(sana):
-    reply = sana.chat("session1", "Hello doctor")
+@pytest.fixture
+def patch_message(monkeypatch):
+    class DummyMessage:
+        def __init__(self, user, message):
+            self.user = user
+            self.message = message
+
+        @staticmethod
+        def get_messages_by_user(user):
+            return []
+
+        def save(self):
+            pass
+
+    monkeypatch.setattr("core.models.message.Message", DummyMessage)
+
+
+def test_chat_basic(sana, patch_message):
+    mock_database_connection()
+    user = DummyUser()
+    reply = sana.chat(user, "Hello doctor")
     assert reply == "Doctor's reply"
-    assert sana.sessions["session1"][-1]["role"] == "assistant"
+    disconnect_all()
 
 
-def test_chat_with_medical_history(sana):
-    reply = sana.chat("session2", "Hello", medical_history={"age": 30, "condition": "flu"})
+def test_chat_with_medical_history(sana, patch_message):
+    mock_database_connection()
+    user = DummyUser()
+    reply = sana.chat(user, "Hello", medical_history={"age": 30, "condition": "flu"})
     assert reply == "Doctor's reply"
-    assert sana.sessions["session2"][0]["role"] == "user"
+    disconnect_all()
 
 
-def test_chat_session_deletion(sana):
-    session_id = "session3"
-    for i in range(Sana.MAX_MESSAGES * 2):
-        sana.chat(session_id, f"msg{i}")
-    assert session_id not in sana.sessions
+def test_chat_final_response(sana, patch_message, monkeypatch):
+    mock_database_connection()
+    user = DummyUser()
+
+    class DummyMessage:
+        def __init__(self, user, message):
+            self.user = user
+            self.message = message
+
+        @staticmethod
+        def get_messages_by_user(user):
+            return [{"role": "user", "content": "msg"}] * (Sana.MAX_MESSAGES * 2 - 1)
+
+        def save(self):
+            pass
+
+    monkeypatch.setattr("core.models.message.Message", DummyMessage)
+    reply = sana.chat(user, "Final message")
+    assert reply == "Doctor's reply"
+    disconnect_all()
+
+
+def test_chat_error(monkeypatch, sana, patch_message):
+    mock_database_connection()
+    user = DummyUser()
+
+    class FailingCompletions:
+        def create(self, model, messages):
+            raise Exception("API error")
+
+    class FailingChat:
+        completions = FailingCompletions()
+
+    sana.client.chat = FailingChat()
+    with pytest.raises(Exception):
+        sana.chat(user, "Hello")
+    disconnect_all()

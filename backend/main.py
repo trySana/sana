@@ -514,7 +514,7 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
             logger.info(f"Transcription completed: {transcription}")
 
             reply = sana.chat(
-                session_id=file.filename,
+                user=user,
                 user_message=transcription,
                 medical_history=medical_history,
             )
@@ -538,3 +538,42 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
 
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+
+
+@app.post("/text_conversation/")
+async def text_conversation(username: str, message: str) -> str:
+    """Receive a text message from a user, send it to ChatGPT, and return the reply.
+
+    Args:
+        username (str): The username of the user
+        message (str): Message from the user
+
+    Returns:
+        str: ChatGPT's reply
+    """
+
+    user = User.objects(username=username).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="User does not exists")
+
+    medical_history = MedicalHistory.objects(user=user).first()
+    if medical_history:
+        medical_history = medical_history.to_json()
+
+    try:
+        reply = sana.chat(
+            user=user,
+            user_message=message,
+            medical_history=medical_history,
+        )
+        logger.info(f"ChatGPT reply: {reply}")
+
+        return reply
+
+    except Exception as e:
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"AI treatment failed: {str(e)}")
