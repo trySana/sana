@@ -10,7 +10,6 @@ from mongoengine import EmailField
 from mongoengine import EnumField
 from mongoengine import StringField
 from pydantic import BaseModel
-from pydantic import EmailStr
 from pydantic import Field
 
 

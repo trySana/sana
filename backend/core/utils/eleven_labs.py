@@ -2,6 +2,7 @@ import httpx
 from core.config import logger
 from core.config import settings
 
+
 class ElevenLabs:
 
     @staticmethod

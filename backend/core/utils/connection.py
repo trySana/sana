@@ -1,6 +1,8 @@
+import mongomock
+from mongoengine import connect
+
 from core.config import logger
 from core.config import settings
-from mongoengine import connect
 
 
 def database_connection():
@@ -38,3 +40,11 @@ def database_connection():
     except Exception as e:
         logger.error(f"Failed to connect to database: {str(e)}")
         raise Exception(f"Database connection failed: {str(e)}")
+
+
+def mock_database_connection():
+    connect(
+        "testdb",
+        host="mongodb://localhost",  # dummy host
+        mongo_client_class=mongomock.MongoClient
+    )

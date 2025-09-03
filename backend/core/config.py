@@ -3,8 +3,6 @@ import logging
 from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
 
-
-# === 1. Configuration du logger global ===
 logger = logging.getLogger("app_logger")
 logger.setLevel(logging.INFO)
 
@@ -17,12 +15,11 @@ if not logger.hasHandlers():
     logger.addHandler(console_handler)
 
 
-# === 2. Configuration de l'application ===
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="allow",  # Permettre les variables supplémentaires
+        extra="allow",
     )
 
     OPENAI_API_KEY: str = ""
