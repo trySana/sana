@@ -5,8 +5,8 @@ import tempfile
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from typing import AsyncGenerator
 
-import openai
 from core.config import logger
 from core.config import settings
 from core.models.MedicalHistory import MedicalHistory
@@ -17,9 +17,9 @@ from core.models.user import HealthInfoRequest
 from core.models.user import HealthInfoResponse
 from core.models.user import UpdateUser
 from core.models.user import User
-from core.utils.chatgpt import chat
+from core.utils.chatgpt import Sana
 from core.utils.connection import database_connection
-from core.utils.eleven_labs import text_to_speech
+from core.utils.eleven_labs import ElevenLabs
 from core.utils.whisper_stt import WhisperSTT
 from fastapi import FastAPI
 from fastapi import File
@@ -48,8 +48,7 @@ SUPPORTED_FORMATS = {
 }
 
 whisper_stt = WhisperSTT()
-
-client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+sana = Sana()
 
 logger.info("Starting the API...")
 app = FastAPI()
@@ -184,18 +183,6 @@ async def authentificate(input: Authentification) -> dict:
             detail=f"Authentication failed: {str(e)}",
         )
 
-        # @app.post("/stt/")
-        # async def stt(file: UploadFile = File(...)):
-        #     temp_path = f"/tmp/{file.filename}"
-        #     with open(temp_path, "wb") as buffer:
-        #         buffer.write(await file.read())
-        #     text = await whisper_stt.transcribe_audio(temp_path)
-        #     parsed = parse_medical_text(text)
-        #     return {"text": text, "parsed": parsed}
-
-        return True
-
-
 @app.put("/update_profile/{username}")
 async def update_profile(username: str, update_data: UpdateUser) -> dict:
     """Update user profile
@@ -291,19 +278,16 @@ async def update_health_info(
         # Connect to database
         database_connection()
 
-        # Vérifier que l'utilisateur existe
         user = User.objects(username=username).first()
         if not user:
             return HealthInfoResponse(
                 success=False, message=f"Utilisateur {username} non trouvé"
             )
 
-        # Créer ou mettre à jour l'historique médical
         medical_history = MedicalHistory.objects(user=user).first()
         if not medical_history:
             medical_history = MedicalHistory(user=user)
 
-        # Mettre à jour les champs fournis
         update_fields = health_data.model_dump(exclude_unset=True)
         for field, value in update_fields.items():
             if value is not None:
@@ -336,7 +320,7 @@ async def get_health_info_v2(username: str) -> HealthInfoResponse:
         database_connection()
         logger.info("DEBUG: database_connection() called successfully")
 
-        # Vérifier que l'utilisateur existe
+        # Verify the user exists
         user = User.objects(username=username).first()
         if not user:
             logger.info(f"DEBUG: User {username} not found")
@@ -344,21 +328,21 @@ async def get_health_info_v2(username: str) -> HealthInfoResponse:
                 success=False, message=f"Utilisateur {username} non trouvé"
             )
 
-        # Récupérer l'historique médical
+        # Get medical hisotry
         medical_history = MedicalHistory.objects(user=user).first()
 
         if not medical_history:
             logger.info(f"DEBUG: No medical history found for user {username}")
             return HealthInfoResponse(
                 success=True,
-                message="Aucune information de santé trouvée",
+                message="No medical history found",
                 health_data={},
             )
 
-        logger.info(f"DEBUG: Medical history found for user {username}")
+        logger.info(f"Medical history found for user {username}")
         return HealthInfoResponse(
             success=True,
-            message="Informations de santé récupérées avec succès",
+            message="Medical history found",
             health_data=medical_history.to_dict(),
         )
 
@@ -434,54 +418,54 @@ async def change_password(username: str, password_data: ChangePasswordRequest) -
 
 
 @asynccontextmanager
-async def temp_file_from_upload(upload_file: UploadFile):
-    """Context manager for temporary file creation and cleanup"""
+async def temp_file_from_upload(upload_file: UploadFile) -> AsyncGenerator[str, None]:
+    """Create a temporary file and return its path
+
+    Args:
+        upload_file (UploadFile): Audio file
+
+    Yields:
+        AsyncGenerator[str, None]: file path
+    """
 
     file_extension = Path(upload_file.filename).suffix
     temp_file_path = None
 
     try:
-        # Créer un fichier temporaire avec l'extension appropriée
+
         with tempfile.NamedTemporaryFile(
             delete=False, suffix=file_extension, mode="wb"
         ) as temp_file:
-            # Remettre le curseur au début du fichier uploadé
+
             await upload_file.seek(0)
-            # Lire le contenu
             content = await upload_file.read()
-            # Écrire le contenu dans le fichier temporaire
             temp_file.write(content)
-            # Forcer l'écriture sur le disque
             temp_file.flush()
-            # Récupérer le chemin du fichier temporaire
             temp_file_path = temp_file.name
 
-        # Le fichier est maintenant fermé mais existe sur le disque
-        # Vérifier que le fichier existe et a une taille > 0
         if not os.path.exists(temp_file_path) or os.path.getsize(temp_file_path) == 0:
-            raise ValueError("Le fichier temporaire n'a pas été créé correctement")
+            raise ValueError("Error when creating the temporary file")
 
         logger.info(
-            f"Fichier temporaire créé: {temp_file_path} "
-            f"(taille: {os.path.getsize(temp_file_path)} bytes)"
+            f"Temporary file created: {temp_file_path} "
+            f"(size: {os.path.getsize(temp_file_path)} bytes)"
         )
 
         yield temp_file_path
 
     except Exception as e:
-        logger.error(f"Erreur lors de la création du fichier temporaire: {str(e)}")
+        logger.error(f"Unable to create temporary file: {str(e)}")
         raise
     finally:
-        # Nettoyer le fichier temporaire
         if temp_file_path and os.path.exists(temp_file_path):
             try:
                 os.unlink(temp_file_path)
-                logger.info(f"Fichier temporaire supprimé: {temp_file_path}")
+                logger.info(f"Temporary file deleted: {temp_file_path}")
             except FileNotFoundError:
                 pass
             except Exception as e:
                 logger.warning(
-                    f"Impossible de supprimer le fichier temporaire "
+                    f"Unable to delete file"
                     f"{temp_file_path}: {str(e)}"
                 )
 
@@ -498,12 +482,11 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
         StreamingResponse: Audio stream of the ChatGPT response.
     """
 
-    # Validation du fichier
     if not file.filename:
-        raise HTTPException(status_code=400, detail="Nom de fichier manquant")
+        raise HTTPException(status_code=400, detail="File is unnamed")
 
     if not file.content_type:
-        raise HTTPException(status_code=400, detail="Type de contenu manquant")
+        raise HTTPException(status_code=400, detail="File is empty")
 
     if not file.content_type.startswith("audio/"):
         raise HTTPException(
@@ -512,13 +495,11 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
             f"Formats supportés: {', '.join(SUPPORTED_FORMATS)}",
         )
 
-    # Vérifier la taille du fichier (max 50MB)
     if file.size and file.size > 50 * 1024 * 1024:
         raise HTTPException(
-            status_code=400, detail="Fichier trop volumineux (max 50MB)"
+            status_code=400, detail="File too large (max 50MB)"
         )
 
-    # Verify that the user exists
     database_connection()
     user = User.objects(username=Path(file.filename).stem).first()
 
@@ -526,9 +507,8 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
         raise HTTPException(status_code=400, detail="User does not exists")
 
     medical_history = MedicalHistory.objects(user=user).first()
-
-    if not medical_history:
-        raise HTTPException(status_code=400, detail="User does not have medical history")
+    if medical_history:
+        medical_history = medical_history.to_json()
 
     disconnect_all()
 
@@ -541,22 +521,20 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
         async with temp_file_from_upload(file) as temp_path:
             logger.info(f"Starting transcription of file: {temp_path}")
 
-            # Vérifier que le fichier existe toujours avant la transcription
             if not os.path.exists(temp_path):
                 raise ValueError(f"Le fichier temporaire {temp_path} n'existe plus")
 
             transcription = await whisper_stt.transcribe_audio(temp_path)
             logger.info(f"Transcription completed: {transcription}")
 
-            reply = chat(
-                client=client,
+            reply = sana.chat(
                 session_id=file.filename,
                 user_message=transcription,
-                medical_history=medical_history.to_json(),
+                medical_history=medical_history,
             )
             logger.info(f"ChatGPT reply: {reply}")
 
-            audio_reply = await text_to_speech(text=reply)
+            audio_reply = await ElevenLabs.text_to_speech(text=reply)
             logger.info(f"Audio reply generated, size: {len(audio_reply)} bytes")
 
             return StreamingResponse(

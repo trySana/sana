@@ -100,16 +100,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 
     console.log("All validations passed, calling API...");
     try {
-      // Convertir la date en format Date
-      const dateParts = dateOfBirth.split("/");
-      const formattedDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
 
       console.log("Sending data to API:", {
         username,
         email,
         password: "***",
         sex,
-        date_of_birth: formattedDate,
+        date_of_birth: dateOfBirth,
       });
 
       await signup({
@@ -117,7 +114,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         email,
         password,
         sex,
-        date_of_birth: formattedDate,
+        date_of_birth: dateOfBirth,
       });
 
       console.log("Signup successful!");
