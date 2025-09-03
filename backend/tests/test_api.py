@@ -18,6 +18,7 @@ from core.utils.user import Sex
 from main import authentificate, change_password, get_health_info_v2, update_health_info
 from main import create_user
 from main import update_profile
+from main import text_conversation, sana
 
 
 def test_create_user_should_create_user():
@@ -426,18 +427,20 @@ def test_change_password_should_fail_if_wrong_current_password():
 
     disconnect_all()
 
-
-def test_change_password_should_fail_if_new_passwords_do_not_match():
+@pytest.mark.asyncio
+def test_text_conversation_should_return_reply(monkeypatch):
     # Given
     username = "Luke Skywalker"
     email = "SpaceLeia@nobrain.com"
     sex = Sex.MALE
     date_of_birth = date.today()
+    password = "Alabama"
     hasher = hashlib.blake2b(
-        "Alabama".encode("utf-8"),
+        password.encode("utf-8"),
         digest_size=15,
         salt=settings.SALT.encode("utf-8"),
     ).hexdigest()
+
     mock_database_connection()
     user = User(
         username=username,
@@ -447,15 +450,27 @@ def test_change_password_should_fail_if_new_passwords_do_not_match():
         date_of_birth=date_of_birth,
     )
     user.save()
-    password_data = ChangePasswordRequest(
-        current_password="Alabama",
-        new_password="NewSecret123",
-        confirm_password="MismatchPassword",
-    )
+
+    monkeypatch.setattr(sana, "chat", lambda user, user_message, medical_history: "Hello, this is Sana!")
+
+    # When
+    result = asyncio.run(text_conversation(username=username, message="Hi Sana!"))
+
+    # Then
+    assert result == "Hello, this is Sana!"
+
+    disconnect_all()
+
+
+@pytest.mark.asyncio
+def test_text_conversation_should_fail_if_user_not_found():
+    # Given
+    mock_database_connection()
 
     # When / Then
     with pytest.raises(HTTPException) as excinfo:
-        asyncio.run(change_password(username=username, password_data=password_data))
+        asyncio.run(text_conversation(username="NonExistent", message="Hi Sana!"))
     assert excinfo.value.status_code == 400
+    assert "User does not exists" in excinfo.value.detail
 
     disconnect_all()

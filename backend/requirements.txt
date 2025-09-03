@@ -14,5 +14,3 @@ whisper
 openai-whisper
 types-requests
 python-multipart
-ffmpeg
-ffmpeg-python
