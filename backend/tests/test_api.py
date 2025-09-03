@@ -1,24 +1,35 @@
 import asyncio
 import hashlib
 from datetime import date
+
 import pytest
-from fastapi import HTTPException
-
-from mongoengine.connection import disconnect_all
-
 from core.config import settings
-from core.models.user import Authentification
-from core.models.user import CreateUser
-from core.models.user import User
-from core.models.user import UpdateUser
-from core.models.user import HealthInfoRequest, ChangePasswordRequest
 from core.models.MedicalHistory import MedicalHistory
+from core.models.user import Authentification
+from core.models.user import ChangePasswordRequest
+from core.models.user import CreateUser
+from core.models.user import HealthInfoRequest
+from core.models.user import UpdateUser
+from core.models.user import User
 from core.utils.connection import mock_database_connection
 from core.utils.user import Sex
-from main import authentificate, change_password, get_health_info_v2, update_health_info
+from fastapi import HTTPException
+from main import authentificate
+from main import change_password
 from main import create_user
+from main import get_health_info_v2
+from main import sana
+from main import text_conversation
+from main import update_health_info
 from main import update_profile
-from main import text_conversation, sana
+from mongoengine.connection import disconnect_all
+
+
+@pytest.fixture(autouse=True)
+def mongo_mock():
+    mock_database_connection()
+    yield
+    disconnect_all()
 
 
 def test_create_user_should_create_user():
@@ -32,7 +43,6 @@ def test_create_user_should_create_user():
     )
 
     # When
-    mock_database_connection()
     result = asyncio.run(create_user(input=input))
 
     # Then
@@ -55,8 +65,6 @@ def test_create_user_should_create_user():
     assert result["message"] == "User created successfully"
     assert result["user_id"] == f"{str(user.id)}"
 
-    disconnect_all()
-
 
 def test_create_user_should_authentificate():
     # Given
@@ -76,8 +84,6 @@ def test_create_user_should_authentificate():
     ).hexdigest()
 
     # When
-    mock_database_connection()
-
     user = User(
         username=auth.username,
         password=hasher,  # pragma: allowlist secret
@@ -98,8 +104,6 @@ def test_create_user_should_authentificate():
     assert result["user"]["sex"] == sex
     assert result["user"]["date_of_birth"] == date_of_birth.isoformat()
 
-    disconnect_all()
-
 
 def test_update_user_should_update():
     # Given
@@ -119,8 +123,6 @@ def test_update_user_should_update():
     update_user = UpdateUser(username=new_username)
 
     # When
-    mock_database_connection()
-
     user = User(
         username=username,
         password=hasher,  # pragma: allowlist secret
@@ -139,8 +141,6 @@ def test_update_user_should_update():
     assert result["message"] == "Profile updated successfully"
     assert result["updated_fields"] == ["username"]
 
-    disconnect_all()
-
 
 def test_update_health_info_should_update():
     # Given
@@ -156,7 +156,6 @@ def test_update_health_info_should_update():
 
     health_data = HealthInfoRequest(height=180, weight=75)
 
-    mock_database_connection()
     user = User(
         username=username,
         password=hasher,
@@ -167,17 +166,13 @@ def test_update_health_info_should_update():
     user.save()
 
     # When
-    result = asyncio.run(
-        update_health_info(username=username, health_data=health_data)
-    )
+    result = asyncio.run(update_health_info(username=username, health_data=health_data))
 
     # Then
     assert result.success is True
     assert "height" in result.health_data
     assert result.health_data["height"] == 180
     assert result.health_data["weight"] == 75
-
-    disconnect_all()
 
 
 def test_get_health_info_v2_should_return_data():
@@ -192,7 +187,6 @@ def test_get_health_info_v2_should_return_data():
         salt=settings.SALT.encode("utf-8"),
     ).hexdigest()
 
-    mock_database_connection()
     user = User(
         username=username,
         password=hasher,
@@ -213,8 +207,6 @@ def test_get_health_info_v2_should_return_data():
     assert result.health_data["height"] == 180
     assert result.health_data["weight"] == 75
 
-    disconnect_all()
-
 
 def test_change_password_should_change():
     # Given
@@ -222,15 +214,14 @@ def test_change_password_should_change():
     email = "SpaceLeia@nobrain.com"
     sex = Sex.MALE
     date_of_birth = date.today()
-    old_password = "Alabama"
-    new_password = "NewSecret123"
+    old_password = "Alabama"  # pragma: allowlist secret
+    new_password = "NewSecret123"  # pragma: allowlist secret
     hasher = hashlib.blake2b(
         old_password.encode("utf-8"),
         digest_size=15,
         salt=settings.SALT.encode("utf-8"),
     ).hexdigest()
 
-    mock_database_connection()
     user = User(
         username=username,
         password=hasher,
@@ -247,7 +238,9 @@ def test_change_password_should_change():
     )
 
     # When
-    result = asyncio.run(change_password(username=username, password_data=password_data))
+    result = asyncio.run(
+        change_password(username=username, password_data=password_data)
+    )
 
     # Then
     assert result["success"] is True
@@ -262,8 +255,6 @@ def test_change_password_should_change():
     updated_user = User.objects(username=username, password=new_hasher).first()
     assert updated_user is not None
 
-    disconnect_all()
-
 
 def test_authentificate_should_fail_with_wrong_password():
     # Given
@@ -272,14 +263,14 @@ def test_authentificate_should_fail_with_wrong_password():
     date_of_birth = date.today()
     auth = Authentification(
         username="Luke Skywalker",
-        password="WrongPassword",
+        password="WrongPassword",  # pragma: allowlist secret
     )
     correct_hasher = hashlib.blake2b(
         "Alabama".encode("utf-8"),
         digest_size=15,
         salt=settings.SALT.encode("utf-8"),
     ).hexdigest()
-    mock_database_connection()
+
     user = User(
         username=auth.username,
         password=correct_hasher,
@@ -294,20 +285,15 @@ def test_authentificate_should_fail_with_wrong_password():
         asyncio.run(authentificate(input=auth))
     assert excinfo.value.status_code == 401
 
-    disconnect_all()
-
 
 def test_update_profile_should_fail_if_user_not_found():
     # Given
     update_user = UpdateUser(username="NewName")
-    mock_database_connection()
 
     # When / Then
     with pytest.raises(HTTPException) as excinfo:
         asyncio.run(update_profile(username="NonExistent", update_data=update_user))
     assert excinfo.value.status_code == 404
-
-    disconnect_all()
 
 
 def test_update_profile_should_fail_if_username_taken():
@@ -315,13 +301,13 @@ def test_update_profile_should_fail_if_username_taken():
     email = "SpaceLeia@nobrain.com"
     sex = Sex.MALE
     date_of_birth = date.today()
-    password = "Alabama"
+    password = "Alabama"  # pragma: allowlist secret
     hasher = hashlib.blake2b(
         password.encode("utf-8"),
         digest_size=15,
         salt=settings.SALT.encode("utf-8"),
     ).hexdigest()
-    mock_database_connection()
+
     user1 = User(
         username="Luke Skywalker",
         password=hasher,
@@ -345,28 +331,22 @@ def test_update_profile_should_fail_if_username_taken():
         asyncio.run(update_profile(username="Luke Skywalker", update_data=update_user))
     assert excinfo.value.status_code == 400
 
-    disconnect_all()
-
 
 def test_update_health_info_should_fail_if_user_not_found():
     # Given
     health_data = HealthInfoRequest(height=180, weight=75)
-    mock_database_connection()
 
     # When
-    result = asyncio.run(update_health_info(username="NonExistent", health_data=health_data))
+    result = asyncio.run(
+        update_health_info(username="NonExistent", health_data=health_data)
+    )
 
     # Then
     assert result.success is False
     assert "non trouvé" in result.message
 
-    disconnect_all()
-
 
 def test_get_health_info_v2_should_fail_if_user_not_found():
-    # Given
-    mock_database_connection()
-
     # When
     result = asyncio.run(get_health_info_v2(username="NonExistent"))
 
@@ -374,24 +354,21 @@ def test_get_health_info_v2_should_fail_if_user_not_found():
     assert result.success is False
     assert "non trouvé" in result.message
 
-    disconnect_all()
-
 
 def test_change_password_should_fail_if_user_not_found():
     # Given
     password_data = ChangePasswordRequest(
-        current_password="Alabama",
-        new_password="NewSecret123",
-        confirm_password="NewSecret123",
+        current_password="Alabama",  # pragma: allowlist secret
+        new_password="NewSecret123",  # pragma: allowlist secret
+        confirm_password="NewSecret123",  # pragma: allowlist secret
     )
-    mock_database_connection()
 
     # When / Then
     with pytest.raises(HTTPException) as excinfo:
-        asyncio.run(change_password(username="NonExistent", password_data=password_data))
+        asyncio.run(
+            change_password(username="NonExistent", password_data=password_data)
+        )
     assert excinfo.value.status_code == 404
-
-    disconnect_all()
 
 
 def test_change_password_should_fail_if_wrong_current_password():
@@ -405,7 +382,7 @@ def test_change_password_should_fail_if_wrong_current_password():
         digest_size=15,
         salt=settings.SALT.encode("utf-8"),
     ).hexdigest()
-    mock_database_connection()
+
     user = User(
         username=username,
         password=hasher,
@@ -415,9 +392,9 @@ def test_change_password_should_fail_if_wrong_current_password():
     )
     user.save()
     password_data = ChangePasswordRequest(
-        current_password="WrongPassword",
-        new_password="NewSecret123",
-        confirm_password="NewSecret123",
+        current_password="WrongPassword",  # pragma: allowlist secret
+        new_password="NewSecret123",  # pragma: allowlist secret
+        confirm_password="NewSecret123",  # pragma: allowlist secret
     )
 
     # When / Then
@@ -425,7 +402,6 @@ def test_change_password_should_fail_if_wrong_current_password():
         asyncio.run(change_password(username=username, password_data=password_data))
     assert excinfo.value.status_code == 401
 
-    disconnect_all()
 
 @pytest.mark.asyncio
 def test_text_conversation_should_return_reply(monkeypatch):
@@ -434,24 +410,25 @@ def test_text_conversation_should_return_reply(monkeypatch):
     email = "SpaceLeia@nobrain.com"
     sex = Sex.MALE
     date_of_birth = date.today()
-    password = "Alabama"
+    password = "Alabama"  # pragma: allowlist secret
     hasher = hashlib.blake2b(
-        password.encode("utf-8"),
+        password.encode("utf-8"),  # pragma: allowlist secret
         digest_size=15,
         salt=settings.SALT.encode("utf-8"),
     ).hexdigest()
 
-    mock_database_connection()
     user = User(
         username=username,
-        password=hasher,
+        password=hasher,  # pragma: allowlist secret
         email=email,
         sex=sex,
         date_of_birth=date_of_birth,
     )
     user.save()
 
-    monkeypatch.setattr(sana, "chat", lambda user, user_message, medical_history: "Hello, this is Sana!")
+    monkeypatch.setattr(
+        sana, "chat", lambda user, user_message, medical_history: "Hello, this is Sana!"
+    )
 
     # When
     result = asyncio.run(text_conversation(username=username, message="Hi Sana!"))
@@ -459,18 +436,11 @@ def test_text_conversation_should_return_reply(monkeypatch):
     # Then
     assert result == "Hello, this is Sana!"
 
-    disconnect_all()
-
 
 @pytest.mark.asyncio
 def test_text_conversation_should_fail_if_user_not_found():
-    # Given
-    mock_database_connection()
-
     # When / Then
     with pytest.raises(HTTPException) as excinfo:
         asyncio.run(text_conversation(username="NonExistent", message="Hi Sana!"))
     assert excinfo.value.status_code == 400
     assert "User does not exists" in excinfo.value.detail
-
-    disconnect_all()
