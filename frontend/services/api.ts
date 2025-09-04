@@ -74,6 +74,15 @@ export interface HealthInfoResponse {
   health_data?: any;
 }
 
+export interface TextConversationRequest {
+  username: string;
+  message: string;
+}
+
+export interface TextConversationResponse {
+  reply: string;
+}
+
 // Classe pour gérer les erreurs API
 export class ApiError extends Error {
   type: string;
@@ -349,5 +358,39 @@ export class ApiService {
         API_ERROR_TYPES.AUTHENTICATION_ERROR,
       );
     }
+  }
+
+  // Conversation texte simple (JSON)
+  static async textConversation(
+    payload: TextConversationRequest,
+  ): Promise<TextConversationResponse> {
+    // Le backend renvoie un texte brut (string) selon main.py actuel.
+    // On gère les deux cas: JSON { reply } ou texte brut.
+    const res = await fetch(API_URLS.TEXT_CONVERSATION, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new ApiError(
+        `Erreur conversation texte (${res.status})`,
+        API_ERROR_TYPES.CONVERSATION_ERROR,
+        res.status,
+      );
+    }
+
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = (await res.json()) as any;
+      // accepte { reply } ou { text }
+      return { reply: data.reply ?? data.text ?? "" };
+    }
+
+    const text = await res.text();
+    return { reply: text };
   }
 }

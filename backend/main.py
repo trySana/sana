@@ -27,6 +27,7 @@ from fastapi import HTTPException
 from fastapi import status
 from fastapi import UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from fastapi.responses import StreamingResponse
 from mongoengine.connection import disconnect_all
 
@@ -72,6 +73,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Reply-Text", "X-Transcription"],
 )
 
 logger.info("API started.")
@@ -527,7 +529,9 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
                 io.BytesIO(audio_reply),
                 media_type="audio/mpeg",
                 headers={
-                    "Content-Disposition": f"attachment; filename={file.filename}.mp3"
+                    "Content-Disposition": f"attachment; filename={file.filename}.mp3",
+                    "X-Reply-Text": reply,
+                    "X-Transcription": transcription,
                 },
             )
 
@@ -540,8 +544,13 @@ async def conversation(file: UploadFile = File(...)) -> StreamingResponse:
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
 
+class TextConversationInput(BaseModel):
+    username: str
+    message: str
+
+
 @app.post("/text_conversation/")
-async def text_conversation(username: str, message: str) -> str:
+async def text_conversation(input: TextConversationInput) -> str:
     """Receive a text message from a user, send it to ChatGPT, and return the reply.
 
     Args:
@@ -552,7 +561,7 @@ async def text_conversation(username: str, message: str) -> str:
         str: ChatGPT's reply
     """
 
-    user = User.objects(username=username).first()
+    user = User.objects(username=input.username).first()
 
     if not user:
         raise HTTPException(status_code=400, detail="User does not exists")
@@ -564,7 +573,7 @@ async def text_conversation(username: str, message: str) -> str:
     try:
         reply = sana.chat(
             user=user,
-            user_message=message,
+            user_message=input.message,
             medical_history=medical_history,
         )
         logger.info(f"ChatGPT reply: {reply}")
