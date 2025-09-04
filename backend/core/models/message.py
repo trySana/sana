@@ -14,6 +14,7 @@ class Message(BaseDocument):
     message = DictField(required=True)
 
     meta = {  # type: ignore
+        "collection": "Message",
         "indexes": ["user"],
     }
 
