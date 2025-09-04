@@ -58,19 +58,27 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         throw new Error(response.error || "Erreur lors de l'envoi au backend");
       }
 
-      // Jouer la réponse
+      // Jouer la réponse audio si présente
       if (response.audioData) {
         await audioService.playAudioResponse(response.audioData);
+      }
+
+      // Afficher le texte de Sana si disponible
+      if (response.replyText) {
+        console.log("🗣️ Sana:", response.replyText);
+        Alert.alert("Sana", response.replyText);
       }
 
       setIsProcessing(false);
       onResponse?.(true);
 
-      Alert.alert(
-        "Conversation réussie",
-        "Votre message a été traité et une réponse audio a été générée.",
-        [{ text: "OK" }],
-      );
+      if (!response.replyText) {
+        Alert.alert(
+          "Conversation réussie",
+          "Votre message a été traité et une réponse audio a été générée.",
+          [{ text: "OK" }],
+        );
+      }
     } catch (error) {
       setIsProcessing(false);
       const errorMessage =

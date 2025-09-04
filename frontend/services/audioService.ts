@@ -16,6 +16,7 @@ export interface ConversationResponse {
   audioData?: ArrayBuffer;
   error?: string;
   transcription?: string;
+  replyText?: string;
 }
 
 class AudioService {
@@ -193,6 +194,12 @@ class AudioService {
         };
       }
 
+      // Récupérer les en-têtes texte + transcription (ajoutés côté backend)
+      const replyHeader = response.headers.get("X-Reply-Text") || undefined;
+      const transcriptionHeader = response.headers.get("X-Transcription") || undefined;
+      if (replyHeader) console.log("🗣️ Sana:", replyHeader);
+      if (transcriptionHeader) console.log("✍️ Transcription:", transcriptionHeader);
+
       // Récupérer la réponse audio
       const responseAudioData = await response.arrayBuffer();
       console.log(
@@ -203,6 +210,8 @@ class AudioService {
       return {
         success: true,
         audioData: responseAudioData,
+        replyText: replyHeader,
+        transcription: transcriptionHeader,
       };
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi audio:", error);

@@ -10,13 +10,9 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  GradientBackground,
-  FadeInView,
-  BottomSheet,
-  VoiceButton,
-} from "../components/common";
+import { GradientBackground, FadeInView, BottomSheet, VoiceButton } from "../components/common";
 import { DashboardContent } from "../components/dashboard";
+import { ChatInterface } from "./ChatInterface";
 import {
   colors,
   typography,
@@ -41,6 +37,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onProfilePress,
 }) => {
   const { user } = useAuth();
+  const [showChat, setShowChat] = useState(false);
 
   const handleRecordingStart = () => {
     console.log("🎤 Enregistrement démarré");
@@ -121,9 +118,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         initialSnapIndex={0}
       >
         <DashboardContent
-          onChatPress={() => console.log("Chat pressé depuis dashboard")}
+          onChatPress={() => {
+            console.log("[UI] Bouton 'Parler à SANA' pressé");
+            setShowChat(true);
+          }}
         />
       </BottomSheet>
+
+      {/* Bouton flottant chat */}
+      <TouchableOpacity
+        accessibilityLabel="Ouvrir le chat Sana"
+        style={styles.chatFab}
+        onPress={() => setShowChat(true)}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="chatbubble-ellipses" size={26} color={colors.white} />
+      </TouchableOpacity>
+
+      {/* Chat Interface en plein écran au-dessus du dashboard */}
+      {showChat && (
+        <View style={styles.chatOverlay}>
+          <ChatInterface onClose={() => setShowChat(false)} />
+        </View>
+      )}
     </GradientBackground>
   );
 };
@@ -238,5 +255,27 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginLeft: spacing.md,
     flex: 1,
+  },
+  chatOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  zIndex: 2000,
+    backgroundColor: "transparent",
+  },
+  chatFab: {
+    position: "absolute",
+    right: spacing.lg,
+    bottom: spacing.xl,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  zIndex: 1000,
+  ...shadows.lg,
   },
 });

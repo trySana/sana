@@ -31,7 +31,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
   const { user } = useAuth();
   const username = user?.username || "demo";
 
-  // Auto-scroll vers le bas
+ 
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => {
@@ -70,10 +70,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose }) => {
       formData.append("file", {
         uri: audioUri,
         type: "audio/m4a",
-        // Important: le backend déduit l'utilisateur du nom de fichier
+        
         name: `${username}.m4a`,
       } as any);
-      // Ne pas fixer Content-Type manuellement (RN gère le boundary)
+     
       const response = await fetch(API_URLS.CONVERSATION, {
         method: "POST",
         body: formData,

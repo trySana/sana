@@ -386,8 +386,11 @@ export class ApiService {
     const contentType = res.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
       const data = (await res.json()) as any;
-      // accepte { reply } ou { text }
-      return { reply: data.reply ?? data.text ?? "" };
+      // Peut être un objet { reply } ou une chaîne JSON brute
+      if (typeof data === "string") {
+        return { reply: data };
+      }
+      return { reply: data?.reply ?? data?.text ?? "" };
     }
 
     const text = await res.text();
