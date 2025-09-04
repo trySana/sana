@@ -23,23 +23,28 @@ class Sana:
 
         session.append({"role": "user", "content": user_message})
 
+        role_message = (
+            "You are a doctor and a patient asks for your opinion. "
+            "Answer in less than 150 characters. "
+            "Ask questions to get more information to help you make a diagnosis. "
+            "Try to narrow down the possible conditions. "
+            "Enquire about symptoms, duration and severity. "
+            "Do not add timestamps to your answers."
+        )
+
         system_messages = [
             {
                 "role": "system",
-                "content": "You are a doctor and a patient asks for your opinion.",
-            },
-            {
-                "role": "system",
-                "content": "Answer in less than 150 characters. You can ask questions.",
+                "content": role_message,
             },
         ]
 
-        if len(session) == 1 and medical_history:
+        if medical_history:
             system_messages.append(
                 {
                     "role": "system",
                     "content": f"The patient medical history is {medical_history}",
-                }
+                    }
             )
 
         if len(session) >= 2 * Sana.MAX_MESSAGES - 1:

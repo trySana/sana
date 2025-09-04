@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     ELEVENLABS_API_KEY: str = ""
     VOICE_ID: str = ""
     MODEL_ID: str = ""
-    TTS_URL: str = "https://api.elevenlabs.io/v1/text-to-speech/B4wUDSZmHFnxqY60nxXm"
+    TTS_URL: str = "https://api.elevenlabs.io/v1/text-to-speech/rbFGGoDXFHtVghjHuS3E"
     SALT: str = ""
 
 

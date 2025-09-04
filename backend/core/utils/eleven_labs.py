@@ -27,8 +27,7 @@ class ElevenLabs:
                 )
 
                 response.raise_for_status()
+                return response.content
 
             except Exception as e:
                 logger.error(e)
-
-            return response.content
